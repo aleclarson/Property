@@ -2,14 +2,19 @@
 require "isDev"
 
 { Any, Void, setType, assert, validateTypes } = require "type-utils"
-{ throwFailure } = require "failure"
 
 NamedFunction = require "NamedFunction"
 emptyFunction = require "emptyFunction"
 ReactiveVar = require "reactive-var"
-Injectable = require "Injectable"
 LazyVar = require "lazy-var"
+isProto = require "isProto"
 
+ReactiveProperty = require "./ReactiveProperty"
+SimpleProperty = require "./SimpleProperty"
+ProxyProperty = require "./ProxyProperty"
+LazyProperty = require "./LazyProperty"
+
+# Injectable = require "Injectable"
 # ReactiveVar = Injectable.Type()
 # LazyVar = Injectable.Type()
 
@@ -29,6 +34,7 @@ configTypes =
   lazy: [ Function, Void ]
   reactive: [ Boolean, Void ]
 
+module.exports =
 Property = NamedFunction "Property", (config) ->
 
   config = {} unless config
@@ -38,19 +44,10 @@ Property = NamedFunction "Property", (config) ->
   if config.needsValue and (config.value is undefined)
     return null
 
-  if isDev
-    self =
-      simple: yes
-      writable: config.writable ?= yes
-      enumerable: config.enumerable
-      configurable: config.configurable ?= yes
-
-  else
-    self =
-      simple: yes
-      writable: yes
-      enumerable: yes
-      configurable: yes
+  self =
+    simple: yes
+    writable: yes
+    configurable: yes
 
   setType self, Property
 
@@ -83,9 +80,19 @@ prototype =
       target[key] = @value
       return
 
-    get = @createGetter key
-    set = @createSetter key, get
-    set = @_wrapSetter set, get
+    if isProto target
+      define target, key, { @value, enumerable, @writable, @configurable }
+      return
+
+    value = @allocate()
+
+    get = @type.createGetter value
+
+    if @writable
+      set = @type.createSetter value
+      set = @_wrapSetter get, set, @willSet, @didSet
+    else
+      set = @_createEmptySetter key
 
     define target, key, { get, set, enumerable, @configurable }
     return
@@ -93,47 +100,32 @@ prototype =
 internalPrototype =
 
   _parseConfig: (config) ->
+    @_parseAttributes config if isDev
+    @type = @_parseType config
+    @allocate = @type.createAllocator config # TODO: Possibly avoid this for simple properties; which might only be possible when out of __DEV__ mode.
+    return
+
+  _parseAttributes: (config) ->
 
     if isDev
+      @enumerable = config.enumerable
 
-      if config.frozen
+    if config.frozen
+      @simple = no
+      @writable = no
+      @configurable = no
+
+    else
+
+      if config.writable is no
         @simple = no
         @writable = no
+
+      if config.configurable is no
+        @simple = no
         @configurable = no
 
-      else if config.enumerable is no
-        @simple = no
-
-      else if config.configurable is no
-        @simple = no
-
-      else if config.writable is no
-        @simple = no
-
-    @createSetter = @_parseSetter config
-    @createGetter = @_parseGetter config
-
-  _parseGetter: (config) ->
-
-    if config.get
-      @simple = no
-      return emptyFunction.thatReturns config.get
-
-    assert not config.set,
-      reason: "Cannot define 'set' without 'get'!"
-
-    if config.lazy
-      @simple = no
-      return @_createLazyGetter config.lazy, @reactive
-
-    if config.reactive
-      @simple = no
-      return @_createReactiveGetter config.value
-
-    @value = config.value if @simple
-    return @_createSimpleGetter config.value
-
-  _parseSetter: (config) ->
+  _parseType: (config) ->
 
     if @writable
 
@@ -145,36 +137,25 @@ internalPrototype =
         @simple = no
         @didSet = config.didSet
 
-      if config.get
-        @simple = no
-        if config.set
-          return emptyFunction.thatReturns config.set
-        return @_createEmptySetter()
+    if config.get
+      @simple = no
+      return ProxyProperty
 
-      if config.lazy
-        return @_createLazySetter()
+    assert not config.set,
+      reason: "Cannot define 'set' without 'get'!"
 
-      if config.reactive
-        return @_createReactiveSetter()
+    if config.lazy
+      @simple = no
+      return LazyProperty
 
-      return @_createSimpleSetter()
+    if config.reactive
+      @simple = no
+      return ReactiveProperty
 
-    if isDev
+    @value = config.value
+    return SimpleProperty
 
-      assert not config.set,
-        reason: "Cannot define 'set' when 'writable' is false!"
-
-      assert not config.willSet,
-        reason: "Cannot define 'willSet' when 'writable' is false!"
-
-      assert not config.didSet,
-        reason: "Cannot define 'didSet' when 'writable' is false!"
-
-    return @_createEmptySetter()
-
-  _wrapSetter: (set, get) ->
-
-    { willSet, didSet } = this
+  _wrapSetter: (get, set, willSet, didSet) ->
 
     setter = set
     needsGetter = set.length > 1
@@ -234,38 +215,7 @@ internalPrototype =
     return (newValue) ->
       setter.call this, newValue, getter.call this
 
-  _createSimpleGetter: (value) -> () ->
-    get = -> get.value
-    get.value = value
-    return get
-
-  _createLazyGetter: (createValue, reactive) -> () ->
-    lazyValue = LazyVar { createValue, reactive }
-    get = -> lazyValue.get.call this
-    get.safely = -> lazyValue._value
-    get.value = lazyValue
-    return get
-
-  _createReactiveGetter: (value) -> () ->
-    reactiveValue = ReactiveVar value
-    get = -> reactiveValue.get()
-    get.safely = -> reactiveValue._value
-    get.value = reactiveValue
-    return get
-
-  _createSimpleSetter: () -> (_, get) ->
-    return (newValue) ->
-      get.value = newValue
-
-  _createLazySetter: () -> (_, get) ->
-    return (newValue) ->
-      get.value.set.call this, newValue
-
-  _createReactiveSetter: () -> (_, get) ->
-    return (newValue) ->
-      get.value.set newValue
-
-  _createEmptySetter: () -> (key) ->
+  _createEmptySetter: (key) ->
     return emptyFunction unless isDev
     return -> throw Error "'#{key}' is not writable."
 
