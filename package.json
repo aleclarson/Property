@@ -1,0 +1,20 @@
+{
+  "name": "Property",
+  "version": "1.0.0",
+  "main": "js/src/Property",
+  "dependencies": {
+    "Injectable": "aleclarson/Injectable#1.0.0",
+    "NamedFunction": "aleclarson/NamedFunction#2.0.0",
+    "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "failure": "aleclarson/failure#1.0.0",
+    "isDev": "aleclarson/isDev#1.0.0",
+    "lazy-var": "aleclarson/lazy-var#1.0.0",
+    "reactive-var": "aleclarson/reactive-var#1.0.6",
+    "type-utils": "aleclarson/type-utils#1.0.0"
+  },
+  "lotus": {
+    "plugins": [
+      "lotus-coffee"
+    ]
+  }
+}
