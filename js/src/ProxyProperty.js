@@ -3,7 +3,7 @@ var emptyFunction;
 emptyFunction = require("emptyFunction");
 
 module.exports = {
-  createAllocator: function(arg) {
+  transformValue: function(arg) {
     var get, set, value;
     get = arg.get, set = arg.set;
     value = {

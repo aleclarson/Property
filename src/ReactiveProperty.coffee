@@ -3,8 +3,9 @@ ReactiveVar = require "reactive-var"
 
 module.exports =
 
-  createAllocator: ({ value }) ->
-    return -> ReactiveVar value
+  transformValue: ->
+    return (value) ->
+      new ReactiveVar value
 
   createGetter: (reactiveValue) ->
     get = -> reactiveValue.get()

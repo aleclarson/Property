@@ -3,11 +3,9 @@ var ReactiveVar;
 ReactiveVar = require("reactive-var");
 
 module.exports = {
-  createAllocator: function(arg) {
-    var value;
-    value = arg.value;
-    return function() {
-      return ReactiveVar(value);
+  transformValue: function() {
+    return function(value) {
+      return new ReactiveVar(value);
     };
   },
   createGetter: function(reactiveValue) {

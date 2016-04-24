@@ -1,16 +1,12 @@
-var Any, LazyProperty, LazyVar, NamedFunction, Property, ProxyProperty, ReactiveProperty, ReactiveVar, SimpleProperty, Void, assert, configTypes, define, emptyFunction, internalPrototype, isProto, key, prototype, ref, setType, validateTypes, value;
+var Any, LazyProperty, NamedFunction, Property, ProxyProperty, ReactiveProperty, SimpleProperty, Void, assert, assertType, configTypes, define, emptyFunction, internalPrototype, isProto, key, prototype, ref, setType, validateTypes, value;
 
 require("isDev");
 
-ref = require("type-utils"), Any = ref.Any, Void = ref.Void, setType = ref.setType, assert = ref.assert, validateTypes = ref.validateTypes;
+ref = require("type-utils"), Any = ref.Any, Void = ref.Void, setType = ref.setType, assert = ref.assert, assertType = ref.assertType, validateTypes = ref.validateTypes;
 
 NamedFunction = require("NamedFunction");
 
 emptyFunction = require("emptyFunction");
-
-ReactiveVar = require("reactive-var");
-
-LazyVar = require("lazy-var");
 
 isProto = require("isProto");
 
@@ -45,9 +41,6 @@ module.exports = Property = NamedFunction("Property", function(config) {
     config = {};
   }
   validateTypes(config, configTypes);
-  if (config.needsValue && (config.value === void 0)) {
-    return null;
-  }
   self = {
     simple: true,
     writable: true,
@@ -59,87 +52,67 @@ module.exports = Property = NamedFunction("Property", function(config) {
 });
 
 prototype = {
-  define: function(target, key) {
-    var enumerable, get, set, simple, value;
-    simple = this.simple, enumerable = this.enumerable;
-    if (isDev) {
-      if (enumerable === void 0) {
-        enumerable = key[0] !== "_";
-      }
-      if (!enumerable) {
-        simple = false;
-      }
-    } else {
-      enumerable = true;
+  define: function(target, key, value) {
+    var enumerable;
+    assertType(key, String);
+    if (arguments.length === 2) {
+      value = this.value;
     }
-    if (simple) {
-      target[key] = this.value;
+    if (this.needsValue) {
+      if (value === void 0) {
+        return;
+      }
+    }
+    enumerable = isDev ? this._isEnumerable(key) : true;
+    if (this.simple && enumerable) {
+      target[key] = value;
       return;
     }
     if (isProto(target)) {
       define(target, key, {
-        value: this.value,
+        value: value,
         enumerable: enumerable,
         writable: this.writable,
         configurable: this.configurable
       });
       return;
     }
-    value = this.allocate();
-    get = this.type.createGetter(value);
-    if (this.writable) {
-      set = this.type.createSetter(value);
-      set = this._wrapSetter(get, set, this.willSet, this.didSet);
-    } else {
-      set = this._createEmptySetter(key);
-    }
-    define(target, key, {
-      get: get,
-      set: set,
-      enumerable: enumerable,
-      configurable: this.configurable
-    });
+    define(target, key, this._createDescriptor(value, key, enumerable));
   }
 };
 
 internalPrototype = {
   _parseConfig: function(config) {
+    var type;
     if (isDev) {
       this._parseAttributes(config);
     }
-    this.type = this._parseType(config);
-    this.allocate = this.type.createAllocator(config);
+    type = this._parseType(config);
+    if (this.simple && !isDev) {
+      return;
+    }
+    this.transformValue = type.transformValue(config);
+    this.createGetter = type.createGetter;
+    return this.createSetter = this._createSetterType(type, config);
   },
   _parseAttributes: function(config) {
-    if (isDev) {
-      this.enumerable = config.enumerable;
-    }
+    this.enumerable = config.enumerable;
     if (config.frozen) {
       this.simple = false;
       this.writable = false;
+      this.configurable = false;
+      return;
+    }
+    if (config.writable === false) {
+      this.simple = false;
+      this.writable = false;
+    }
+    if (config.configurable === false) {
+      this.simple = false;
       return this.configurable = false;
-    } else {
-      if (config.writable === false) {
-        this.simple = false;
-        this.writable = false;
-      }
-      if (config.configurable === false) {
-        this.simple = false;
-        return this.configurable = false;
-      }
     }
   },
   _parseType: function(config) {
-    if (this.writable) {
-      if (config.willSet) {
-        this.simple = false;
-        this.willSet = config.willSet;
-      }
-      if (config.didSet) {
-        this.simple = false;
-        this.didSet = config.didSet;
-      }
-    }
     if (config.get) {
       this.simple = false;
       return ProxyProperty;
@@ -151,79 +124,90 @@ internalPrototype = {
       this.simple = false;
       return LazyProperty;
     }
+    this.value = config.value;
+    this.needsValue = config.needsValue === true;
     if (config.reactive) {
       this.simple = false;
       return ReactiveProperty;
     }
-    this.value = config.value;
     return SimpleProperty;
   },
-  _wrapSetter: function(get, set, willSet, didSet) {
-    var getter, needsGetter, setter;
-    setter = set;
-    needsGetter = set.length > 1;
+  _createSetterType: function(type, config) {
+    if (this.writable) {
+      return this._wrapSetterType(type.createSetter, config.willSet, config.didSet);
+    }
+    if (!isDev) {
+      return function() {
+        return emptyFunction;
+      };
+    }
+    return function(key) {
+      return function() {
+        throw Error("'" + key + "' is not writable.");
+      };
+    };
+  },
+  _wrapSetterType: function(createSetter, willSet, didSet) {
+    var wrapSetter;
+    wrapSetter = emptyFunction.thatReturnsArgument;
     if (willSet) {
-      if (!needsGetter) {
-        needsGetter = willSet.length > 1;
-      }
       if (didSet) {
-        if (!needsGetter) {
-          needsGetter = didSet.length > 1;
-        }
-        if (needsGetter) {
-          setter = function(newValue, oldValue) {
+        this.simple = false;
+        wrapSetter = function(setter) {
+          return function(newValue, oldValue) {
             newValue = willSet.call(this, newValue, oldValue);
-            set.call(this, newValue, oldValue);
+            setter.call(this, newValue, oldValue);
             return didSet.call(this, newValue, oldValue);
           };
-        } else {
-          setter = function(newValue) {
-            newValue = willSet.call(this, newValue);
-            set.call(this, newValue);
-            return didSet.call(this, newValue);
-          };
-        }
-      } else if (needsGetter) {
-        setter = function(newValue, oldValue) {
-          newValue = willSet.call(this, newValue, oldValue);
-          return set.call(this, newValue, oldValue);
         };
       } else {
-        setter = function(newValue) {
-          newValue = willSet.call(this, newValue);
-          return set.call(this, newValue);
+        this.simple = false;
+        wrapSetter = function(setter) {
+          return function(newValue, oldValue) {
+            newValue = willSet.call(this, newValue, oldValue);
+            return setter.call(this, newValue, oldValue);
+          };
         };
       }
     } else if (didSet) {
-      if (!needsGetter) {
-        needsGetter = didSet.length > 1;
-      }
-      if (needsGetter) {
-        setter = function(newValue, oldValue) {
-          set.call(this, newValue, oldValue);
+      this.simple = false;
+      wrapSetter = function(setter) {
+        return function(newValue, oldValue) {
+          setter.call(this, newValue, oldValue);
           return didSet.call(this, newValue, oldValue);
         };
-      } else {
-        setter = function(newValue) {
-          set.call(this, newValue);
-          return didSet.call(this, newValue);
+      };
+    }
+    return function(key, value, get) {
+      var getter, setter;
+      setter = wrapSetter(createSetter(value));
+      if (setter.length < 2) {
+        return function(newValue) {
+          return setter.call(this, newValue);
         };
       }
-    }
-    if (!needsGetter) {
-      return setter;
-    }
-    getter = get.safely || get;
-    return function(newValue) {
-      return setter.call(this, newValue, getter.call(this));
+      getter = get.safely || get;
+      return function(newValue) {
+        return setter.call(this, newValue, getter.call(this));
+      };
     };
   },
-  _createEmptySetter: function(key) {
-    if (!isDev) {
-      return emptyFunction;
+  _isEnumerable: function(key) {
+    if (this.enumerable !== void 0) {
+      return this.enumerable;
     }
-    return function() {
-      throw Error("'" + key + "' is not writable.");
+    return key[0] !== "_";
+  },
+  _createDescriptor: function(value, key, enumerable) {
+    var get, set;
+    value = this.transformValue(value);
+    get = this.createGetter(value);
+    set = this.createSetter(key, value, get);
+    return {
+      get: get,
+      set: set,
+      enumerable: enumerable,
+      configurable: this.configurable
     };
   }
 };
@@ -242,7 +226,5 @@ for (key in internalPrototype) {
     value: value
   });
 }
-
-module.exports = Property;
 
 //# sourceMappingURL=../../map/src/Property.map

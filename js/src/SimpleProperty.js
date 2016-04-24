@@ -1,10 +1,6 @@
 module.exports = {
-  createAllocator: function(config) {
-    var initialValue;
-    initialValue = config.value;
-    return function() {
-      var value;
-      value = initialValue;
+  transformValue: function() {
+    return function(value) {
       return {
         get: function() {
           return value;

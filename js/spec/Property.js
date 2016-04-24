@@ -43,10 +43,21 @@ describe("Property", function() {
     });
   });
   describe("options.needsValue", function() {
-    return it("returns null if 'options.value' is undefined", function() {
-      return expect(Property({
+    it("skips defining a property if the value would be undefined", function() {
+      var obj, prop;
+      prop = Property({
         needsValue: true
-      })).toBe(null);
+      });
+      prop.define(obj = {}, "key");
+      return expect(Object.hasOwnProperty("key")).toBe(false);
+    });
+    return it("works as expected if the value is not undefined", function() {
+      var obj, prop;
+      prop = Property({
+        needsValue: true
+      });
+      prop.define(obj = {}, "key", 1);
+      return expect(obj.key).toBe(1);
     });
   });
   describe("options.frozen", function() {
@@ -203,7 +214,7 @@ describe("Property", function() {
   return describe("options.reactive", function() {
     var Tracker;
     Tracker = require("tracker");
-    return it("creates a value that is backed by a ReactiveVar", function() {
+    it("creates a value that is backed by a ReactiveVar", function() {
       var computation, obj, prop, spy;
       prop = Property({
         value: 1,
@@ -220,6 +231,26 @@ describe("Property", function() {
       expect(spy.calls.argsFor(0)).toEqual([1]);
       obj.key = 2;
       return expect(spy.calls.argsFor(1)).toEqual([2]);
+    });
+    return it("cannot be used with prototypes", function() {
+      var MyType, computation, obj, prop, spy;
+      prop = Property({
+        value: 1,
+        reactive: true
+      });
+      MyType = function() {};
+      prop.define(MyType.prototype, "key");
+      obj = new MyType;
+      spy = jasmine.createSpy();
+      computation = Tracker.autorun((function(_this) {
+        return function() {
+          return spy(obj.key);
+        };
+      })(this));
+      computation._sync = true;
+      expect(spy.calls.argsFor(0)).toEqual([1]);
+      obj.key = 2;
+      return expect(spy.calls.argsFor(1)).toEqual([]);
     });
   });
 });

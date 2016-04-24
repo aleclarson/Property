@@ -3,7 +3,7 @@ var LazyVar;
 LazyVar = require("lazy-var");
 
 module.exports = {
-  createAllocator: function(config) {
+  transformValue: function(config) {
     var options;
     options = {
       createValue: config.lazy,

@@ -3,7 +3,7 @@ emptyFunction = require "emptyFunction"
 
 module.exports =
 
-  createAllocator: ({ get, set }) ->
+  transformValue: ({ get, set }) ->
     value = { get, set }
     return -> value
 

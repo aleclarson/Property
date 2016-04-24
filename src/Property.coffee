@@ -1,12 +1,10 @@
 
 require "isDev"
 
-{ Any, Void, setType, assert, validateTypes } = require "type-utils"
+{ Any, Void, setType, assert, assertType, validateTypes } = require "type-utils"
 
 NamedFunction = require "NamedFunction"
 emptyFunction = require "emptyFunction"
-ReactiveVar = require "reactive-var"
-LazyVar = require "lazy-var"
 isProto = require "isProto"
 
 ReactiveProperty = require "./ReactiveProperty"
@@ -41,9 +39,6 @@ Property = NamedFunction "Property", (config) ->
 
   validateTypes config, configTypes
 
-  if config.needsValue and (config.value is undefined)
-    return null
-
   self =
     simple: yes
     writable: yes
@@ -61,81 +56,68 @@ Property = NamedFunction "Property", (config) ->
 
 prototype =
 
-  define: (target, key) ->
+  define: (target, key, value) ->
 
-    { simple, enumerable } = this
+    assertType key, String
 
-    if isDev
+    if arguments.length is 2
+      value = @value
 
-      if enumerable is undefined
-        enumerable = key[0] isnt "_"
+    if @needsValue
+      return if value is undefined
 
-      unless enumerable
-        simple = no
+    enumerable = if isDev then @_isEnumerable key else yes
 
-    else
-      enumerable = yes
-
-    if simple
-      target[key] = @value
+    if @simple and enumerable
+      target[key] = value
       return
 
     if isProto target
-      define target, key, { @value, enumerable, @writable, @configurable }
+      define target, key, { value, enumerable, @writable, @configurable }
       return
 
-    value = @allocate()
-
-    get = @type.createGetter value
-
-    if @writable
-      set = @type.createSetter value
-      set = @_wrapSetter get, set, @willSet, @didSet
-    else
-      set = @_createEmptySetter key
-
-    define target, key, { get, set, enumerable, @configurable }
+    define target, key, @_createDescriptor value, key, enumerable
     return
 
 internalPrototype =
 
   _parseConfig: (config) ->
+
+    # We force 'enumerable', 'configurable', and 'writable'
+    # to be true when not in __DEV__ mode so we can avoid
+    # any unnecessary calls to 'Object.defineProperty'.
     @_parseAttributes config if isDev
-    @type = @_parseType config
-    @allocate = @type.createAllocator config # TODO: Possibly avoid this for simple properties; which might only be possible when out of __DEV__ mode.
-    return
+
+    type = @_parseType config
+
+    # When not in __DEV__ mode, we can be absolutely certain
+    # that 'enumerable' equals true. With that in mind, we can avoid the
+    # cost of creating 'transformValue', 'createGetter', and 'createSetter'!
+    return if @simple and not isDev
+
+    @transformValue = type.transformValue config
+    @createGetter = type.createGetter
+    @createSetter = @_createSetterType type, config
 
   _parseAttributes: (config) ->
 
-    if isDev
-      @enumerable = config.enumerable
+    @enumerable = config.enumerable
 
     if config.frozen
       @simple = no
       @writable = no
       @configurable = no
+      return
 
-    else
+    if config.writable is no
+      @simple = no
+      @writable = no
 
-      if config.writable is no
-        @simple = no
-        @writable = no
-
-      if config.configurable is no
-        @simple = no
-        @configurable = no
+    if config.configurable is no
+      @simple = no
+      @configurable = no
 
   _parseType: (config) ->
-
-    if @writable
-
-      if config.willSet
-        @simple = no
-        @willSet = config.willSet
-
-      if config.didSet
-        @simple = no
-        @didSet = config.didSet
 
     if config.get
       @simple = no
@@ -148,81 +130,77 @@ internalPrototype =
       @simple = no
       return LazyProperty
 
+    @value = config.value
+    @needsValue = config.needsValue is yes
+
     if config.reactive
       @simple = no
       return ReactiveProperty
 
-    @value = config.value
     return SimpleProperty
 
-  _wrapSetter: (get, set, willSet, didSet) ->
+  _createSetterType: (type, config) ->
 
-    setter = set
-    needsGetter = set.length > 1
+    if @writable
+      return @_wrapSetterType type.createSetter, config.willSet, config.didSet
+
+    unless isDev
+      return -> emptyFunction
+
+    return (key) ->
+      return -> throw Error "'#{key}' is not writable."
+
+  _wrapSetterType: (createSetter, willSet, didSet) ->
+
+    wrapSetter = emptyFunction.thatReturnsArgument
 
     if willSet
 
-      unless needsGetter
-        needsGetter = willSet.length > 1
-
       if didSet
-
-        unless needsGetter
-          needsGetter = didSet.length > 1
-
-        if needsGetter
-          setter = (newValue, oldValue) ->
+        @simple = no
+        wrapSetter = (setter) ->
+          return (newValue, oldValue) ->
             newValue = willSet.call this, newValue, oldValue
-            set.call this, newValue, oldValue
+            setter.call this, newValue, oldValue
             didSet.call this, newValue, oldValue
 
-        else
-          setter = (newValue) ->
-            newValue = willSet.call this, newValue
-            set.call this, newValue
-            didSet.call this, newValue
-
-      else if needsGetter
-        setter = (newValue, oldValue) ->
-          newValue = willSet.call this, newValue, oldValue
-          set.call this, newValue, oldValue
-
       else
-        setter = (newValue) ->
-          newValue = willSet.call this, newValue
-          set.call this, newValue
+        @simple = no
+        wrapSetter = (setter) ->
+          return (newValue, oldValue) ->
+            newValue = willSet.call this, newValue, oldValue
+            setter.call this, newValue, oldValue
 
     else if didSet
-
-      unless needsGetter
-        needsGetter = didSet.length > 1
-
-      if needsGetter
-        setter = (newValue, oldValue) ->
-          set.call this, newValue, oldValue
+      @simple = no
+      wrapSetter = (setter) ->
+        return (newValue, oldValue) ->
+          setter.call this, newValue, oldValue
           didSet.call this, newValue, oldValue
 
-      else
-        setter = (newValue) ->
-          set.call this, newValue
-          didSet.call this, newValue
+    return (key, value, get) ->
 
-    unless needsGetter
-      return setter
+      setter = wrapSetter createSetter value
+      if setter.length < 2
+        return (newValue) ->
+          setter.call this, newValue
 
-    getter = get.safely or get
+      getter = get.safely or get
+      return (newValue) ->
+        setter.call this, newValue, getter.call this
 
-    return (newValue) ->
-      setter.call this, newValue, getter.call this
+  _isEnumerable: (key) ->
+    return @enumerable if @enumerable isnt undefined
+    return key[0] isnt "_"
 
-  _createEmptySetter: (key) ->
-    return emptyFunction unless isDev
-    return -> throw Error "'#{key}' is not writable."
+  _createDescriptor: (value, key, enumerable) ->
+    value = @transformValue value
+    get = @createGetter value
+    set = @createSetter key, value, get
+    return { get, set, enumerable, @configurable }
 
 for key, value of prototype
   define Property.prototype, key, { value, enumerable: yes }
 
 for key, value of internalPrototype
   define Property.prototype, key, { value }
-
-module.exports = Property

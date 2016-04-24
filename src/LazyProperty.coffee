@@ -3,11 +3,14 @@ LazyVar = require "lazy-var"
 
 module.exports =
 
-  createAllocator: (config) ->
+  transformValue: (config) ->
+
     options =
       createValue: config.lazy
       reactive: config.reactive
-    return -> LazyVar options
+
+    return ->
+      LazyVar options
 
   createGetter: (lazyValue) ->
     get = -> lazyValue.get.call this

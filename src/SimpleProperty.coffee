@@ -1,10 +1,8 @@
 
 module.exports =
 
-  createAllocator: (config) ->
-    initialValue = config.value
-    return ->
-      value = initialValue
+  transformValue: ->
+    return (value) ->
       get: -> value
       set: (newValue) -> value = newValue
 

@@ -42,10 +42,21 @@ describe "Property", ->
 
   describe "options.needsValue", ->
 
-    it "returns null if 'options.value' is undefined", ->
+    it "skips defining a property if the value would be undefined", ->
 
-      expect Property { needsValue: yes }
-        .toBe null
+      prop = Property { needsValue: yes }
+      prop.define obj = {}, "key"
+
+      expect Object.hasOwnProperty "key"
+        .toBe no
+
+    it "works as expected if the value is not undefined", ->
+
+      prop = Property { needsValue: yes }
+      prop.define obj = {}, "key", 1
+
+      expect obj.key
+        .toBe 1
 
   describe "options.frozen", ->
 
@@ -241,3 +252,22 @@ describe "Property", ->
 
       expect spy.calls.argsFor 1
         .toEqual [ 2 ]
+
+    it "cannot be used with prototypes", ->
+
+      prop = Property { value: 1, reactive: yes }
+      MyType = ->
+      prop.define MyType.prototype, "key"
+      obj = new MyType
+
+      spy = jasmine.createSpy()
+      computation = Tracker.autorun => spy obj.key
+      computation._sync = yes
+
+      expect spy.calls.argsFor 0
+        .toEqual [ 1 ]
+
+      obj.key = 2
+
+      expect spy.calls.argsFor 1
+        .toEqual []
