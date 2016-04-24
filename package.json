@@ -1,7 +1,7 @@
 {
   "name": "Property",
   "version": "1.0.0",
-  "main": "js/src/Property",
+  "main": "js/src/index",
   "dependencies": {
     "Injectable": "aleclarson/Injectable#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
