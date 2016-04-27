@@ -115,6 +115,9 @@ internalPrototype = {
   _parseType: function(config) {
     if (config.get) {
       this.simple = false;
+      if (!config.set) {
+        this.writable = false;
+      }
       return ProxyProperty;
     }
     assert(!config.set, {
@@ -125,7 +128,9 @@ internalPrototype = {
       return LazyProperty;
     }
     this.value = config.value;
-    this.needsValue = config.needsValue === true;
+    if (config.needsValue === true) {
+      this.needsValue = true;
+    }
     if (config.reactive) {
       this.simple = false;
       return ReactiveProperty;

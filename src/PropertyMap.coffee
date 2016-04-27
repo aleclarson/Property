@@ -1,5 +1,5 @@
 
-{ isType, setType } = require "type-utils"
+{ isType, setType, validateTypes } = require "type-utils"
 
 NamedFunction = require "NamedFunction"
 
@@ -30,11 +30,16 @@ PropertyMap = NamedFunction "PropertyMap", (props) ->
 
 prototype =
 
+  keys: ->
+    Object.keys @_props
+
   define: (target, args) ->
     for key, prop of @_props
       createValue = @_creators[key]
       if createValue
-        prop.define target, key, createValue.apply target, args
+        if createValue.length
+          prop.define target, key, createValue.apply target, args
+        else prop.define target, key, createValue.call target
       else prop.define target, key
     return
 

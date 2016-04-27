@@ -121,6 +121,7 @@ internalPrototype =
 
     if config.get
       @simple = no
+      @writable = no unless config.set
       return ProxyProperty
 
     assert not config.set,
@@ -131,7 +132,9 @@ internalPrototype =
       return LazyProperty
 
     @value = config.value
-    @needsValue = config.needsValue is yes
+
+    if config.needsValue is yes
+      @needsValue = yes
 
     if config.reactive
       @simple = no
