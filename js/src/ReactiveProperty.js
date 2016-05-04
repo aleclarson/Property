@@ -1,11 +1,14 @@
-var ReactiveVar;
+var Injectable, ReactiveVar;
 
-ReactiveVar = require("reactive-var");
+Injectable = require("Injectable");
+
+ReactiveVar = Injectable.Type();
 
 module.exports = {
+  inject: ReactiveVar.inject,
   transformValue: function() {
     return function(value) {
-      return new ReactiveVar(value);
+      return ReactiveVar(value);
     };
   },
   createGetter: function(reactiveValue) {

@@ -130,6 +130,20 @@ describe "Property", ->
       expect obj.key
         .not.toBe obj.key
 
+    it "can be defined on a prototype", ->
+
+      MyType = ->
+
+      prop = Property
+        get: -> 1
+
+      prop.define MyType.prototype, "test"
+
+      self = new MyType
+
+      expect self.test
+        .toBe 1
+
   describe "options.set", ->
 
     it "allows the use of a custom setter", ->
@@ -149,6 +163,26 @@ describe "Property", ->
 
       expect -> Property { set: emptyFunction }
         .toThrowError "Cannot define 'set' without 'get'!"
+
+    it "cannot be defined on a prototype", ->
+
+      MyType = ->
+
+      spy = jasmine.createSpy()
+
+      prop = Property
+        get: -> 1
+        set: spy
+
+      prop.define MyType.prototype, "test"
+
+      self = new MyType
+
+      expect -> self.test = 0
+        .not.toThrow()
+
+      expect spy.calls.count()
+        .toBe 0
 
   describe "options.didSet", ->
 

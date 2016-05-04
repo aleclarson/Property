@@ -2,19 +2,18 @@
 require "isDev"
 
 { Any, Void, setType, assert, assertType, validateTypes } = require "type-utils"
+{ throwFailure } = require "failure"
 
 NamedFunction = require "NamedFunction"
 emptyFunction = require "emptyFunction"
 isProto = require "isProto"
+Tracer = require "tracer"
+guard = require "guard"
 
 ReactiveProperty = require "./ReactiveProperty"
 SimpleProperty = require "./SimpleProperty"
 ProxyProperty = require "./ProxyProperty"
 LazyProperty = require "./LazyProperty"
-
-# Injectable = require "Injectable"
-# ReactiveVar = Injectable.Type()
-# LazyVar = Injectable.Type()
 
 define = Object.defineProperty
 
@@ -44,15 +43,17 @@ Property = NamedFunction "Property", (config) ->
     writable: yes
     configurable: yes
 
+  self.traceInit = Tracer "Property()" if isDev
+
   setType self, Property
 
   self._parseConfig config
 
   return self
 
-# Property.inject =
-#   LazyVar: LazyVar.inject
-#   ReactiveVar: ReactiveVar.inject
+Property.inject =
+  LazyVar: LazyProperty.inject
+  ReactiveVar: ReactiveProperty.inject
 
 prototype =
 
@@ -73,10 +74,17 @@ prototype =
       return
 
     if isProto target
-      define target, key, { value, enumerable, @writable, @configurable }
+      if @get
+        define target, key, { @get, enumerable, @configurable }
+      else
+        define target, key, { value, enumerable, @writable, @configurable }
       return
 
-    define target, key, @_createDescriptor value, key, enumerable
+    guard =>
+      define target, key, @_createDescriptor value, key, enumerable
+    .fail (error) =>
+      stack = @traceInit() if isDev
+      throwFailure error, { property: this, value, key, enumerable, stack }
     return
 
 internalPrototype =
@@ -95,6 +103,7 @@ internalPrototype =
     # cost of creating 'transformValue', 'createGetter', and 'createSetter'!
     return if @simple and not isDev
 
+    @get = config.get
     @transformValue = type.transformValue config
     @createGetter = type.createGetter
     @createSetter = @_createSetterType type, config

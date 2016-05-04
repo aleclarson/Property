@@ -1,14 +1,20 @@
-var Any, LazyProperty, NamedFunction, Property, ProxyProperty, ReactiveProperty, SimpleProperty, Void, assert, assertType, configTypes, define, emptyFunction, internalPrototype, isProto, key, prototype, ref, setType, validateTypes, value;
+var Any, LazyProperty, NamedFunction, Property, ProxyProperty, ReactiveProperty, SimpleProperty, Tracer, Void, assert, assertType, configTypes, define, emptyFunction, guard, internalPrototype, isProto, key, prototype, ref, setType, throwFailure, validateTypes, value;
 
 require("isDev");
 
 ref = require("type-utils"), Any = ref.Any, Void = ref.Void, setType = ref.setType, assert = ref.assert, assertType = ref.assertType, validateTypes = ref.validateTypes;
+
+throwFailure = require("failure").throwFailure;
 
 NamedFunction = require("NamedFunction");
 
 emptyFunction = require("emptyFunction");
 
 isProto = require("isProto");
+
+Tracer = require("tracer");
+
+guard = require("guard");
 
 ReactiveProperty = require("./ReactiveProperty");
 
@@ -46,10 +52,18 @@ module.exports = Property = NamedFunction("Property", function(config) {
     writable: true,
     configurable: true
   };
+  if (isDev) {
+    self.traceInit = Tracer("Property()");
+  }
   setType(self, Property);
   self._parseConfig(config);
   return self;
 });
+
+Property.inject = {
+  LazyVar: LazyProperty.inject,
+  ReactiveVar: ReactiveProperty.inject
+};
 
 prototype = {
   define: function(target, key, value) {
@@ -69,15 +83,41 @@ prototype = {
       return;
     }
     if (isProto(target)) {
-      define(target, key, {
-        value: value,
-        enumerable: enumerable,
-        writable: this.writable,
-        configurable: this.configurable
-      });
+      if (this.get) {
+        define(target, key, {
+          get: this.get,
+          enumerable: enumerable,
+          configurable: this.configurable
+        });
+      } else {
+        define(target, key, {
+          value: value,
+          enumerable: enumerable,
+          writable: this.writable,
+          configurable: this.configurable
+        });
+      }
       return;
     }
-    define(target, key, this._createDescriptor(value, key, enumerable));
+    guard((function(_this) {
+      return function() {
+        return define(target, key, _this._createDescriptor(value, key, enumerable));
+      };
+    })(this)).fail((function(_this) {
+      return function(error) {
+        var stack;
+        if (isDev) {
+          stack = _this.traceInit();
+        }
+        return throwFailure(error, {
+          property: _this,
+          value: value,
+          key: key,
+          enumerable: enumerable,
+          stack: stack
+        });
+      };
+    })(this));
   }
 };
 
@@ -91,6 +131,7 @@ internalPrototype = {
     if (this.simple && !isDev) {
       return;
     }
+    this.get = config.get;
     this.transformValue = type.transformValue(config);
     this.createGetter = type.createGetter;
     return this.createSetter = this._createSetterType(type, config);

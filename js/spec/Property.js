@@ -110,7 +110,7 @@ describe("Property", function() {
     });
   });
   describe("options.get", function() {
-    return it("allows the use of a custom getter", function() {
+    it("allows the use of a custom getter", function() {
       var obj, prop;
       prop = Property({
         get: function() {
@@ -120,6 +120,18 @@ describe("Property", function() {
       prop.define(obj = {}, "key");
       expect(obj.key).not.toBe(void 0);
       return expect(obj.key).not.toBe(obj.key);
+    });
+    return it("can be defined on a prototype", function() {
+      var MyType, prop, self;
+      MyType = function() {};
+      prop = Property({
+        get: function() {
+          return 1;
+        }
+      });
+      prop.define(MyType.prototype, "test");
+      self = new MyType;
+      return expect(self.test).toBe(1);
     });
   });
   describe("options.set", function() {
@@ -133,12 +145,29 @@ describe("Property", function() {
       obj.key = 1;
       return expect(spy.calls.argsFor(0)).toEqual([1]);
     });
-    return it("cannot be used without 'options.get'", function() {
+    it("cannot be used without 'options.get'", function() {
       return expect(function() {
         return Property({
           set: emptyFunction
         });
       }).toThrowError("Cannot define 'set' without 'get'!");
+    });
+    return it("cannot be defined on a prototype", function() {
+      var MyType, prop, self, spy;
+      MyType = function() {};
+      spy = jasmine.createSpy();
+      prop = Property({
+        get: function() {
+          return 1;
+        },
+        set: spy
+      });
+      prop.define(MyType.prototype, "test");
+      self = new MyType;
+      expect(function() {
+        return self.test = 0;
+      }).not.toThrow();
+      return expect(spy.calls.count()).toBe(0);
     });
   });
   describe("options.didSet", function() {

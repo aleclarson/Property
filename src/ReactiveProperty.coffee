@@ -1,11 +1,15 @@
 
-ReactiveVar = require "reactive-var"
+Injectable = require "Injectable"
+
+ReactiveVar = Injectable.Type()
 
 module.exports =
 
+  inject: ReactiveVar.inject
+
   transformValue: ->
     return (value) ->
-      new ReactiveVar value
+      ReactiveVar value
 
   createGetter: (reactiveValue) ->
     get = -> reactiveValue.get()
