@@ -1,8 +1,6 @@
-var Any, LazyProperty, NamedFunction, Property, ProxyProperty, ReactiveProperty, SimpleProperty, Tracer, Void, assert, assertType, configTypes, define, emptyFunction, guard, internalPrototype, isProto, key, prototype, ref, setType, throwFailure, validateTypes, value;
+var Any, LazyProperty, NamedFunction, Property, ProxyProperty, ReactiveProperty, SimpleProperty, Tracer, Void, assert, assertType, assertTypes, configTypes, define, emptyFunction, guard, internalPrototype, isProto, key, prototype, setType, throwFailure, value;
 
 require("isDev");
-
-ref = require("type-utils"), Any = ref.Any, Void = ref.Void, setType = ref.setType, assert = ref.assert, assertType = ref.assertType, validateTypes = ref.validateTypes;
 
 throwFailure = require("failure").throwFailure;
 
@@ -10,11 +8,23 @@ NamedFunction = require("NamedFunction");
 
 emptyFunction = require("emptyFunction");
 
+assertTypes = require("assertTypes");
+
+assertType = require("assertType");
+
+setType = require("setType");
+
 isProto = require("isProto");
 
 Tracer = require("tracer");
 
+assert = require("assert");
+
 guard = require("guard");
+
+Void = require("Void");
+
+Any = require("Any");
 
 ReactiveProperty = require("./ReactiveProperty");
 
@@ -26,34 +36,40 @@ LazyProperty = require("./LazyProperty");
 
 define = Object.defineProperty;
 
-configTypes = {
-  value: Any,
-  needsValue: [Boolean, Void],
-  frozen: [Boolean, Void],
-  writable: [Boolean, Void],
-  configurable: [Boolean, Void],
-  enumerable: [Boolean, Void],
-  get: [Function, Void],
-  set: [Function, Void],
-  didSet: [Function, Void],
-  willSet: [Function, Void],
-  lazy: [Function, Void],
-  reactive: [Boolean, Void]
-};
+if (isDev) {
+  configTypes = {
+    value: Any,
+    needsValue: [Boolean, Void],
+    frozen: [Boolean, Void],
+    writable: [Boolean, Void],
+    configurable: [Boolean, Void],
+    enumerable: [Boolean, Void],
+    get: [Function, Void],
+    set: [Function, Void],
+    didSet: [Function, Void],
+    willSet: [Function, Void],
+    lazy: [Function, Void],
+    reactive: [Boolean, Void]
+  };
+}
 
 module.exports = Property = NamedFunction("Property", function(config) {
   var self;
   if (!config) {
     config = {};
   }
-  validateTypes(config, configTypes);
+  if (isDev) {
+    assertTypes(config, configTypes);
+  }
   self = {
     simple: true,
     writable: true,
     configurable: true
   };
   if (isDev) {
-    self.traceInit = Tracer("Property()");
+    define(self, "_tracer", {
+      value: Tracer("Property()")
+    });
   }
   setType(self, Property);
   self._parseConfig(config);
@@ -107,7 +123,7 @@ prototype = {
       return function(error) {
         var stack;
         if (isDev) {
-          stack = _this.traceInit();
+          stack = _this._tracer();
         }
         return throwFailure(error, {
           property: _this,

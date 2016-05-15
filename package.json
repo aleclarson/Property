@@ -3,14 +3,21 @@
   "version": "1.0.0",
   "main": "js/src/index",
   "dependencies": {
+    "Any": "aleclarson/Any#1.0.0",
     "Injectable": "aleclarson/Injectable#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
+    "Void": "aleclarson/Void#1.0.0",
+    "assert": "aleclarson/assert#1.0.0",
+    "assertType": "aleclarson/assertType#1.0.0",
+    "assertTypes": "aleclarson/assertTypes#1.0.0",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "failure": "aleclarson/failure#1.0.0",
+    "guard": "aleclarson/guard#1.0.0",
     "isDev": "aleclarson/isDev#1.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
-    "lazy-var": "aleclarson/lazy-var#1.0.0",
-    "reactive-var": "aleclarson/reactive-var#1.0.6",
-    "type-utils": "aleclarson/type-utils#1.0.0"
+    "isType": "aleclarson/isType#1.0.0",
+    "setType": "aleclarson/setType#1.0.0",
+    "tracer": "aleclarson/tracer#1.0.0"
   },
   "lotus": {
     "plugins": [

@@ -1,7 +1,7 @@
 
-{ isType, setType, validateTypes } = require "type-utils"
-
 NamedFunction = require "NamedFunction"
+setType = require "setType"
+isType = require "isType"
 
 Property = require "./Property"
 

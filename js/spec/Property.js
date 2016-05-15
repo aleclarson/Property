@@ -226,6 +226,8 @@ describe("Property", function() {
     });
   });
   describe("options.lazy", function() {
+    var LazyVar;
+    LazyVar = require("lazy-var");
     return it("creates a value that is backed by a LazyVar", function() {
       var obj, prop, spy;
       spy = jasmine.createSpy();
@@ -241,8 +243,9 @@ describe("Property", function() {
     });
   });
   return describe("options.reactive", function() {
-    var Tracker;
+    var ReactiveVar, Tracker;
     Tracker = require("tracker");
+    ReactiveVar = require("reactive-var");
     it("creates a value that is backed by a ReactiveVar", function() {
       var computation, obj, prop, spy;
       prop = Property({

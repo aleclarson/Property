@@ -251,6 +251,9 @@ describe "Property", ->
 
   describe "options.lazy", ->
 
+    # This must be imported to support 'options.lazy'!
+    LazyVar = require "lazy-var"
+
     it "creates a value that is backed by a LazyVar", ->
 
       spy = jasmine.createSpy()
@@ -269,6 +272,9 @@ describe "Property", ->
   describe "options.reactive", ->
 
     Tracker = require "tracker"
+
+    # This must be imported to support 'options.reactive'!
+    ReactiveVar = require "reactive-var"
 
     it "creates a value that is backed by a ReactiveVar", ->
 

@@ -1,14 +1,19 @@
 
 require "isDev"
 
-{ Any, Void, setType, assert, assertType, validateTypes } = require "type-utils"
 { throwFailure } = require "failure"
 
 NamedFunction = require "NamedFunction"
 emptyFunction = require "emptyFunction"
+assertTypes = require "assertTypes"
+assertType = require "assertType"
+setType = require "setType"
 isProto = require "isProto"
 Tracer = require "tracer"
+assert = require "assert"
 guard = require "guard"
+Void = require "Void"
+Any = require "Any"
 
 ReactiveProperty = require "./ReactiveProperty"
 SimpleProperty = require "./SimpleProperty"
@@ -17,33 +22,36 @@ LazyProperty = require "./LazyProperty"
 
 define = Object.defineProperty
 
-configTypes =
-  value: Any
-  needsValue: [ Boolean, Void ]
-  frozen: [ Boolean, Void ]
-  writable: [ Boolean, Void ]
-  configurable: [ Boolean, Void ]
-  enumerable: [ Boolean, Void ]
-  get: [ Function, Void ]
-  set: [ Function, Void ]
-  didSet: [ Function, Void ]
-  willSet: [ Function, Void ]
-  lazy: [ Function, Void ]
-  reactive: [ Boolean, Void ]
+if isDev
+  configTypes =
+    value: Any
+    needsValue: [ Boolean, Void ]
+    frozen: [ Boolean, Void ]
+    writable: [ Boolean, Void ]
+    configurable: [ Boolean, Void ]
+    enumerable: [ Boolean, Void ]
+    get: [ Function, Void ]
+    set: [ Function, Void ]
+    didSet: [ Function, Void ]
+    willSet: [ Function, Void ]
+    lazy: [ Function, Void ]
+    reactive: [ Boolean, Void ]
 
 module.exports =
 Property = NamedFunction "Property", (config) ->
 
   config = {} unless config
 
-  validateTypes config, configTypes
+  assertTypes config, configTypes if isDev
 
   self =
     simple: yes
     writable: yes
     configurable: yes
 
-  self.traceInit = Tracer "Property()" if isDev
+  if isDev
+    define self, "_tracer",
+      value: Tracer "Property()"
 
   setType self, Property
 
@@ -83,7 +91,7 @@ prototype =
     guard =>
       define target, key, @_createDescriptor value, key, enumerable
     .fail (error) =>
-      stack = @traceInit() if isDev
+      stack = @_tracer() if isDev
       throwFailure error, { property: this, value, key, enumerable, stack }
     return
 

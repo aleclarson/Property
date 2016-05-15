@@ -1,8 +1,10 @@
-var NamedFunction, Property, PropertyMap, define, isType, key, prototype, ref, setType, validateTypes, value;
-
-ref = require("type-utils"), isType = ref.isType, setType = ref.setType, validateTypes = ref.validateTypes;
+var NamedFunction, Property, PropertyMap, define, isType, key, prototype, setType, value;
 
 NamedFunction = require("NamedFunction");
+
+setType = require("setType");
+
+isType = require("isType");
 
 Property = require("./Property");
 
@@ -37,10 +39,10 @@ prototype = {
     return Object.keys(this._props);
   },
   define: function(target, args) {
-    var createValue, key, prop, ref1;
-    ref1 = this._props;
-    for (key in ref1) {
-      prop = ref1[key];
+    var createValue, key, prop, ref;
+    ref = this._props;
+    for (key in ref) {
+      prop = ref[key];
       createValue = this._creators[key];
       if (createValue) {
         if (createValue.length) {
