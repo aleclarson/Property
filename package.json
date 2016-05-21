@@ -4,8 +4,10 @@
   "main": "js/src/index",
   "dependencies": {
     "Any": "aleclarson/Any#1.0.0",
-    "Injectable": "aleclarson/Injectable#1.0.0",
+    "InjectableType": "aleclarson/InjectableType#1.0.0",
+    "Kind": "aleclarson/Kind#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
+    "PureObject": "aleclarson/PureObject#1.0.0",
     "Void": "aleclarson/Void#1.0.0",
     "assert": "aleclarson/assert#1.0.0",
     "assertType": "aleclarson/assertType#1.0.0",

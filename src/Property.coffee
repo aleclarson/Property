@@ -7,22 +7,29 @@ NamedFunction = require "NamedFunction"
 emptyFunction = require "emptyFunction"
 assertTypes = require "assertTypes"
 assertType = require "assertType"
+PureObject = require "PureObject"
 setType = require "setType"
 isProto = require "isProto"
 Tracer = require "tracer"
+isType = require "isType"
 assert = require "assert"
 guard = require "guard"
 Void = require "Void"
+Kind = require "Kind"
 Any = require "Any"
 
 ReactiveProperty = require "./ReactiveProperty"
 SimpleProperty = require "./SimpleProperty"
 ProxyProperty = require "./ProxyProperty"
 LazyProperty = require "./LazyProperty"
+LazyVar = require "./inject/LazyVar"
 
 define = Object.defineProperty
 
 if isDev
+  TargetType = [ Kind(Object), PureObject ]
+  KeyType = [ String ]
+  KeyType.push Symbol if Symbol
   configTypes =
     value: Any
     needsValue: [ Boolean, Void ]
@@ -59,15 +66,13 @@ Property = NamedFunction "Property", (config) ->
 
   return self
 
-Property.inject =
-  LazyVar: LazyProperty.inject
-  ReactiveVar: ReactiveProperty.inject
-
 prototype =
 
   define: (target, key, value) ->
 
-    assertType key, String
+    if isDev
+      assertType target, TargetType
+      assertType key, KeyType
 
     if arguments.length is 2
       value = @value
@@ -79,23 +84,59 @@ prototype =
 
     if @simple and enumerable
       target[key] = value
-      return
-
-    if isProto target
-      if @get
-        define target, key, { @get, enumerable, @configurable }
-      else
-        define target, key, { value, enumerable, @writable, @configurable }
-      return
-
-    guard =>
-      define target, key, @_createDescriptor value, key, enumerable
-    .fail (error) =>
-      stack = @_tracer() if isDev
-      throwFailure error, { property: this, value, key, enumerable, stack }
+    else @_define target, key, value, enumerable
     return
 
 internalPrototype =
+
+  _isEnumerable: (key) ->
+    return yes if isType key, Symbol
+    return @enumerable if @enumerable isnt undefined
+    return key[0] isnt "_"
+
+  _define: (target, key, value, enumerable) ->
+
+    if isProto target
+
+      if @get
+        descriptor = {
+          @get
+          @set
+          enumerable
+          @configurable
+        }
+
+      else if @lazy
+        descriptor = {
+          get: LazyVar(@lazy).get
+          enumerable
+          @configurable
+        }
+
+      else
+        descriptor = {
+          value
+          enumerable
+          @writable
+          @configurable
+        }
+
+    else
+      value = @transformValue value
+      get = @createGetter value
+      descriptor = {
+        get
+        set: @createSetter key, value, get
+        enumerable
+        @configurable
+      }
+
+    prop = this
+    guard -> define target, key, descriptor
+    .fail (error) -> throwFailure error, {
+      target, key, value, descriptor, prop
+      stack: prop._tracer() if isDev
+    }
 
   _parseConfig: (config) ->
 
@@ -112,6 +153,9 @@ internalPrototype =
     return if @simple and not isDev
 
     @get = config.get
+    @set = config.set
+    @lazy = config.lazy
+
     @transformValue = type.transformValue config
     @createGetter = type.createGetter
     @createSetter = @_createSetterType type, config
@@ -168,7 +212,7 @@ internalPrototype =
       return -> emptyFunction
 
     return (key) ->
-      return -> throw Error "'#{key}' is not writable."
+      return -> throw Error "'" + key.toString() + "' is not writable."
 
   _wrapSetterType: (createSetter, willSet, didSet) ->
 
@@ -208,16 +252,6 @@ internalPrototype =
       getter = get.safely or get
       return (newValue) ->
         setter.call this, newValue, getter.call this
-
-  _isEnumerable: (key) ->
-    return @enumerable if @enumerable isnt undefined
-    return key[0] isnt "_"
-
-  _createDescriptor: (value, key, enumerable) ->
-    value = @transformValue value
-    get = @createGetter value
-    set = @createSetter key, value, get
-    return { get, set, enumerable, @configurable }
 
 for key, value of prototype
   define Property.prototype, key, { value, enumerable: yes }

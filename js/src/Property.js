@@ -1,4 +1,4 @@
-var Any, LazyProperty, NamedFunction, Property, ProxyProperty, ReactiveProperty, SimpleProperty, Tracer, Void, assert, assertType, assertTypes, configTypes, define, emptyFunction, guard, internalPrototype, isProto, key, prototype, setType, throwFailure, value;
+var Any, KeyType, Kind, LazyProperty, LazyVar, NamedFunction, Property, ProxyProperty, PureObject, ReactiveProperty, SimpleProperty, TargetType, Tracer, Void, assert, assertType, assertTypes, configTypes, define, emptyFunction, guard, internalPrototype, isProto, isType, key, prototype, setType, throwFailure, value;
 
 require("isDev");
 
@@ -12,17 +12,23 @@ assertTypes = require("assertTypes");
 
 assertType = require("assertType");
 
+PureObject = require("PureObject");
+
 setType = require("setType");
 
 isProto = require("isProto");
 
 Tracer = require("tracer");
 
+isType = require("isType");
+
 assert = require("assert");
 
 guard = require("guard");
 
 Void = require("Void");
+
+Kind = require("Kind");
 
 Any = require("Any");
 
@@ -34,9 +40,16 @@ ProxyProperty = require("./ProxyProperty");
 
 LazyProperty = require("./LazyProperty");
 
+LazyVar = require("./inject/LazyVar");
+
 define = Object.defineProperty;
 
 if (isDev) {
+  TargetType = [Kind(Object), PureObject];
+  KeyType = [String];
+  if (Symbol) {
+    KeyType.push(Symbol);
+  }
   configTypes = {
     value: Any,
     needsValue: [Boolean, Void],
@@ -76,15 +89,13 @@ module.exports = Property = NamedFunction("Property", function(config) {
   return self;
 });
 
-Property.inject = {
-  LazyVar: LazyProperty.inject,
-  ReactiveVar: ReactiveProperty.inject
-};
-
 prototype = {
   define: function(target, key, value) {
     var enumerable;
-    assertType(key, String);
+    if (isDev) {
+      assertType(target, TargetType);
+      assertType(key, KeyType);
+    }
     if (arguments.length === 2) {
       value = this.value;
     }
@@ -96,48 +107,70 @@ prototype = {
     enumerable = isDev ? this._isEnumerable(key) : true;
     if (this.simple && enumerable) {
       target[key] = value;
-      return;
+    } else {
+      this._define(target, key, value, enumerable);
     }
-    if (isProto(target)) {
-      if (this.get) {
-        define(target, key, {
-          get: this.get,
-          enumerable: enumerable,
-          configurable: this.configurable
-        });
-      } else {
-        define(target, key, {
-          value: value,
-          enumerable: enumerable,
-          writable: this.writable,
-          configurable: this.configurable
-        });
-      }
-      return;
-    }
-    guard((function(_this) {
-      return function() {
-        return define(target, key, _this._createDescriptor(value, key, enumerable));
-      };
-    })(this)).fail((function(_this) {
-      return function(error) {
-        var stack;
-        if (isDev) {
-          stack = _this._tracer();
-        }
-        return throwFailure(error, {
-          property: _this,
-          value: value,
-          key: key,
-          enumerable: enumerable,
-          stack: stack
-        });
-      };
-    })(this));
   }
 };
 
 internalPrototype = {
+  _isEnumerable: function(key) {
+    if (isType(key, Symbol)) {
+      return true;
+    }
+    if (this.enumerable !== void 0) {
+      return this.enumerable;
+    }
+    return key[0] !== "_";
+  },
+  _define: function(target, key, value, enumerable) {
+    var descriptor, get, prop;
+    if (isProto(target)) {
+      if (this.get) {
+        descriptor = {
+          get: this.get,
+          set: this.set,
+          enumerable: enumerable,
+          configurable: this.configurable
+        };
+      } else if (this.lazy) {
+        descriptor = {
+          get: LazyVar(this.lazy).get,
+          enumerable: enumerable,
+          configurable: this.configurable
+        };
+      } else {
+        descriptor = {
+          value: value,
+          enumerable: enumerable,
+          writable: this.writable,
+          configurable: this.configurable
+        };
+      }
+    } else {
+      value = this.transformValue(value);
+      get = this.createGetter(value);
+      descriptor = {
+        get: get,
+        set: this.createSetter(key, value, get),
+        enumerable: enumerable,
+        configurable: this.configurable
+      };
+    }
+    prop = this;
+    return guard(function() {
+      return define(target, key, descriptor);
+    }).fail(function(error) {
+      return throwFailure(error, {
+        target: target,
+        key: key,
+        value: value,
+        descriptor: descriptor,
+        prop: prop,
+        stack: isDev ? prop._tracer() : void 0
+      });
+    });
+  },
   _parseConfig: function(config) {
     var type;
     if (isDev) {
@@ -148,6 +181,8 @@ internalPrototype = {
       return;
     }
     this.get = config.get;
+    this.set = config.set;
+    this.lazy = config.lazy;
     this.transformValue = type.transformValue(config);
     this.createGetter = type.createGetter;
     return this.createSetter = this._createSetterType(type, config);
@@ -205,7 +240,7 @@ internalPrototype = {
     }
     return function(key) {
       return function() {
-        throw Error("'" + key + "' is not writable.");
+        throw Error("'" + key.toString() + "' is not writable.");
       };
     };
   },
@@ -252,24 +287,6 @@ internalPrototype = {
       return function(newValue) {
         return setter.call(this, newValue, getter.call(this));
       };
-    };
-  },
-  _isEnumerable: function(key) {
-    if (this.enumerable !== void 0) {
-      return this.enumerable;
-    }
-    return key[0] !== "_";
-  },
-  _createDescriptor: function(value, key, enumerable) {
-    var get, set;
-    value = this.transformValue(value);
-    get = this.createGetter(value);
-    set = this.createSetter(key, value, get);
-    return {
-      get: get,
-      set: set,
-      enumerable: enumerable,
-      configurable: this.configurable
     };
   }
 };

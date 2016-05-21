@@ -1,11 +1,7 @@
 
-Injectable = require "Injectable"
-
-LazyVar = Injectable.Type()
+LazyVar = require "./inject/LazyVar"
 
 module.exports =
-
-  inject: LazyVar.inject
 
   transformValue: (config) ->
 

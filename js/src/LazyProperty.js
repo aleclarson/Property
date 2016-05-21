@@ -1,11 +1,8 @@
-var Injectable, LazyVar;
+var LazyVar;
 
-Injectable = require("Injectable");
-
-LazyVar = Injectable.Type();
+LazyVar = require("./inject/LazyVar");
 
 module.exports = {
-  inject: LazyVar.inject,
   transformValue: function(config) {
     var options;
     options = {
