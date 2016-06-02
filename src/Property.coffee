@@ -27,9 +27,6 @@ LazyVar = require "./inject/LazyVar"
 define = Object.defineProperty
 
 if isDev
-  TargetType = [ Kind(Object), PureObject ]
-  KeyType = [ String ]
-  KeyType.push Symbol if Symbol
   configTypes =
     value: Any
     needsValue: [ Boolean, Void ]
@@ -66,13 +63,15 @@ Property = NamedFunction "Property", (config) ->
 
   return self
 
+Property.targetType = [ Kind(Object), PureObject ]
+Property.keyType = if global.Symbol then [ String, Symbol ] else [ String ]
+
 prototype =
 
   define: (target, key, value) ->
 
-    if isDev
-      assertType target, TargetType
-      assertType key, KeyType
+    assertType target, Property.targetType
+    assertType key, Property.keyType
 
     if arguments.length is 2
       value = @value

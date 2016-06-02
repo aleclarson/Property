@@ -1,4 +1,4 @@
-var Any, KeyType, Kind, LazyProperty, LazyVar, NamedFunction, Property, ProxyProperty, PureObject, ReactiveProperty, SimpleProperty, TargetType, Tracer, Void, assert, assertType, assertTypes, configTypes, define, emptyFunction, guard, internalPrototype, isProto, isType, key, prototype, setType, throwFailure, value;
+var Any, Kind, LazyProperty, LazyVar, NamedFunction, Property, ProxyProperty, PureObject, ReactiveProperty, SimpleProperty, Tracer, Void, assert, assertType, assertTypes, configTypes, define, emptyFunction, guard, internalPrototype, isProto, isType, key, prototype, setType, throwFailure, value;
 
 require("isDev");
 
@@ -45,11 +45,6 @@ LazyVar = require("./inject/LazyVar");
 define = Object.defineProperty;
 
 if (isDev) {
-  TargetType = [Kind(Object), PureObject];
-  KeyType = [String];
-  if (Symbol) {
-    KeyType.push(Symbol);
-  }
   configTypes = {
     value: Any,
     needsValue: [Boolean, Void],
@@ -89,13 +84,15 @@ module.exports = Property = NamedFunction("Property", function(config) {
   return self;
 });
 
+Property.targetType = [Kind(Object), PureObject];
+
+Property.keyType = global.Symbol ? [String, Symbol] : [String];
+
 prototype = {
   define: function(target, key, value) {
     var enumerable;
-    if (isDev) {
-      assertType(target, TargetType);
-      assertType(key, KeyType);
-    }
+    assertType(target, Property.targetType);
+    assertType(key, Property.keyType);
     if (arguments.length === 2) {
       value = this.value;
     }
