@@ -108,6 +108,7 @@ internalPrototype =
       else if @lazy
         descriptor = {
           get: LazyVar(@lazy).get
+          set: -> throw Error "'" + key.toString() + "' is not writable."
           enumerable
           @configurable
         }

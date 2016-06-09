@@ -133,6 +133,9 @@ internalPrototype = {
       } else if (this.lazy) {
         descriptor = {
           get: LazyVar(this.lazy).get,
+          set: function() {
+            throw Error("'" + key.toString() + "' is not writable.");
+          },
           enumerable: enumerable,
           configurable: this.configurable
         };
