@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "ProxyProperty.js",
+  "sourceRoot": "../../src",
+  "sources": [
+    "ProxyProperty.coffee"
+  ],
+  "names": [],
+  "mappings": "AACA,IAAA;;AAAA,aAAA,GAAgB,OAAA,CAAQ,eAAR;;AAEhB,MAAM,CAAC,OAAP,GAEE;EAAA,cAAA,EAAgB,SAAC,GAAD;AACd,QAAA;IADiB,eAAK;IACtB,KAAA,GAAQ;MAAE,KAAA,GAAF;MAAO,KAAA,GAAP;;AACR,WAAO,SAAA;aAAG;IAAH;EAFO,CAAhB;EAIA,YAAA,EAAc,SAAC,KAAD;AACZ,WAAO,KAAK,CAAC;EADD,CAJd;EAOA,YAAA,EAAc,SAAC,KAAD;AACZ,WAAO,KAAK,CAAC,GAAN,IAAa;EADR,CAPd"
+}
