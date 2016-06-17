@@ -13,7 +13,6 @@
     "assertType": "aleclarson/assertType#1.0.0",
     "assertTypes": "aleclarson/assertTypes#1.0.0",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
-    "failure": "aleclarson/failure#1.0.0",
     "guard": "aleclarson/guard#1.0.0",
     "isDev": "aleclarson/isDev#1.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
