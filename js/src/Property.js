@@ -1,8 +1,10 @@
-var Any, Kind, NamedFunction, Property, PropertyInternal, PureObject, Tracer, Void, assertType, assertTypes, configTypes, define, isProto, isType, setType;
+var Any, Kind, NamedFunction, Property, Proxy, PureObject, Void, assert, assertType, assertTypes, configTypes, define, isProto, isType, mergeDefaults, prototype;
 
 require("isDev");
 
 NamedFunction = require("NamedFunction");
+
+mergeDefaults = require("mergeDefaults");
 
 assertTypes = require("assertTypes");
 
@@ -10,13 +12,11 @@ assertType = require("assertType");
 
 PureObject = require("PureObject");
 
-setType = require("setType");
-
 isProto = require("isProto");
 
-Tracer = require("tracer");
-
 isType = require("isType");
+
+assert = require("assert");
 
 Void = require("Void");
 
@@ -24,7 +24,7 @@ Kind = require("Kind");
 
 Any = require("Any");
 
-PropertyInternal = require("./PropertyInternal");
+Proxy = require("./Proxy");
 
 define = Object.defineProperty;
 
@@ -49,26 +49,118 @@ Property = NamedFunction("Property", function(config) {
     config = {};
   }
   isDev && assertTypes(config, configTypes);
-  self = {
-    simple: true,
-    writable: true,
-    configurable: true
-  };
-  isDev && define(self, "_tracer", {
-    value: Tracer("Property()")
+  self = Object.create(Property.prototype);
+  define(self, "_defaults", {
+    value: self._parseDefaults(config)
   });
-  setType(self, Property);
-  self._parseConfig(config);
   return self;
 });
-
-PropertyInternal.define(Property.prototype);
-
-module.exports = Property;
 
 Property.targetType = [Kind(Object), PureObject];
 
 Property.keyType = global.Symbol ? [String, Symbol] : String;
+
+prototype = {
+  define: function(target, key, config) {
+    if (config == null) {
+      config = {};
+    }
+    assertType(target, Property.targetType);
+    assertType(key, Property.keyType);
+    assertType(config, Object);
+    if (config.value == null) {
+      config.value = this._value;
+    }
+    if (config.needsValue != null ? config.needsValue : config.needsValue = this._needsValue) {
+      if (config.value === void 0) {
+        return;
+      }
+    }
+    if (config.enumerable == null) {
+      config.enumerable = isDev ? this._isEnumerable(key) : true;
+    }
+    mergeDefaults(config, this._defaults);
+    if (this._needsProxy(config)) {
+      config.target = target;
+      config.key = key;
+      Proxy.define(config);
+    } else {
+      target[key] = config.value;
+    }
+  },
+  _isEnumerable: function(key) {
+    if (isType(key, Symbol)) {
+      return true;
+    }
+    if (this._enumerable === false) {
+      return false;
+    }
+    return key[0] !== "_";
+  },
+  _needsProxy: function(config) {
+    if (!(config.enumerable && config.writable && config.configurable)) {
+      return true;
+    }
+    if (config.get || config.lazy || config.reactive) {
+      return true;
+    }
+    if (config.didSet || config.willSet) {
+      return true;
+    }
+    return false;
+  },
+  _parseDefaults: function(config) {
+    var defaults;
+    defaults = {};
+    if (isDev && (config.enumerable === false)) {
+      define(this, "_enumerable", {
+        value: false
+      });
+    }
+    if (config.frozen) {
+      defaults.writable = !isDev;
+      defaults.configurable = !isDev;
+    } else {
+      defaults.writable = (!isDev) || (config.writable !== false);
+      defaults.configurable = (!isDev) || (config.configurable !== false);
+    }
+    if (config.willSet) {
+      defaults.willSet = config.willSet;
+    }
+    if (config.didSet) {
+      defaults.didSet = config.didSet;
+    }
+    if (config.get) {
+      defaults.get = config.get;
+      if (config.set) {
+        defaults.set = config.set;
+      } else {
+        defaults.writable = false;
+      }
+    } else {
+      assert(!config.set, "Cannot define 'set' without 'get'!");
+      if (config.lazy) {
+        defaults.lazy = config.lazy;
+      } else {
+        define(this, "_value", {
+          value: config.value
+        });
+        if (config.needsValue) {
+          define(this, "_needsValue", {
+            value: true
+          });
+        }
+      }
+    }
+    return defaults;
+  }
+};
+
+Object.keys(prototype).forEach(function(key) {
+  return define(Property.prototype, key, {
+    value: prototype[key]
+  });
+});
 
 Property.mutable = Property();
 
@@ -80,24 +172,6 @@ Property.hidden = Property({
   enumerable: false
 });
 
-Property.prototype.define = function(target, key) {
-  var enumerable, value;
-  assertType(target, Property.targetType);
-  assertType(key, Property.keyType);
-  if (arguments.length > 2) {
-    value = arguments[2];
-  } else {
-    value = this.value;
-  }
-  if (this.needsValue && (value === void 0)) {
-    return;
-  }
-  enumerable = isDev ? this._isEnumerable(key) : true;
-  if (this.simple && enumerable) {
-    target[key] = value;
-    return;
-  }
-  this._define(target, key, value, enumerable);
-};
+module.exports = Property;
 
-//# sourceMappingURL=../../map/src/Property.map
+//# sourceMappingURL=map/Property.map

@@ -1,3 +1,3 @@
 module.exports = require("InjectableType")();
 
-//# sourceMappingURL=../../../map/src/inject/LazyVar.map
+//# sourceMappingURL=map/LazyVar.map
