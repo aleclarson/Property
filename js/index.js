@@ -6,4 +6,4 @@ Property.Map = require("./PropertyMap");
 
 module.exports = Property;
 
-//# sourceMappingURL=../../map/src/index.map
+//# sourceMappingURL=map/index.map

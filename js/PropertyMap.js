@@ -46,9 +46,13 @@ prototype = {
       createValue = this._creators[key];
       if (createValue) {
         if (createValue.length) {
-          prop.define(target, key, createValue.apply(target, args));
+          prop.define(target, key, {
+            value: createValue.apply(target, args)
+          });
         } else {
-          prop.define(target, key, createValue.call(target));
+          prop.define(target, key, {
+            value: createValue.call(target)
+          });
         }
       } else {
         prop.define(target, key);
@@ -65,4 +69,4 @@ for (key in prototype) {
   });
 }
 
-//# sourceMappingURL=../../map/src/PropertyMap.map
+//# sourceMappingURL=map/PropertyMap.map
