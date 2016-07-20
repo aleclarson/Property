@@ -1,7 +1,7 @@
 {
   "name": "Property",
   "version": "1.0.0",
-  "main": "js/src/index",
+  "main": "js/index",
   "dependencies": {
     "Any": "aleclarson/Any#1.0.0",
     "InjectableType": "aleclarson/InjectableType#1.0.0",
