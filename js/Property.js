@@ -68,7 +68,7 @@ prototype = {
     assertType(target, Property.targetType);
     assertType(key, Property.keyType);
     assertType(config, Object);
-    if (config.value == null) {
+    if (config.value === void 0) {
       config.value = this._value;
     }
     if (config.needsValue != null ? config.needsValue : config.needsValue = this._needsValue) {
@@ -81,9 +81,7 @@ prototype = {
     }
     mergeDefaults(config, this._defaults);
     if (this._needsProxy(config)) {
-      config.target = target;
-      config.key = key;
-      Proxy.define(config);
+      Proxy.define(target, key, config);
     } else {
       target[key] = config.value;
     }

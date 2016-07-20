@@ -56,7 +56,9 @@ prototype =
     assertType key, Property.keyType
     assertType config, Object
 
-    config.value ?= @_value
+    if config.value is undefined
+      config.value = @_value
+
     if config.needsValue ?= @_needsValue
       return if config.value is undefined
 
@@ -64,9 +66,7 @@ prototype =
     mergeDefaults config, @_defaults
 
     if @_needsProxy config
-      config.target = target
-      config.key = key
-      Proxy.define config
+      Proxy.define target, key, config
     else
       target[key] = config.value
     return
