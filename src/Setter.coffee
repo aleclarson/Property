@@ -1,4 +1,8 @@
 
+require "isDev"
+
+emptyFunction = require "emptyFunction"
+
 Setter = exports
 
 Setter.create = (key, proxy, config) ->

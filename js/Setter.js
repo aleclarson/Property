@@ -1,4 +1,8 @@
-var Setter;
+var Setter, emptyFunction;
+
+require("isDev");
+
+emptyFunction = require("emptyFunction");
 
 Setter = exports;
 

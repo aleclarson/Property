@@ -61,7 +61,7 @@ Proxy.types =
 
   reactive: (config, key, target) ->
     assert not isProto(target), "Cannot define reactive Property on a prototype!"
-    value = ReactiveVar config.value ? defaults.value
+    value = ReactiveVar config.value
     get = -> value.get()
     get.safely = -> value._value
     set = (newValue) -> value.set newValue

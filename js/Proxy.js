@@ -77,9 +77,9 @@ Proxy.types = {
     };
   },
   reactive: function(config, key, target) {
-    var get, ref, set, value;
+    var get, set, value;
     assert(!isProto(target), "Cannot define reactive Property on a prototype!");
-    value = ReactiveVar((ref = config.value) != null ? ref : defaults.value);
+    value = ReactiveVar(config.value);
     get = function() {
       return value.get();
     };

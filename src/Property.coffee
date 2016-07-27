@@ -110,14 +110,12 @@ prototype =
 
     else
       assert not config.set, "Cannot define 'set' without 'get'!"
+      defaults.reactive = config.reactive is yes
       if config.lazy
         defaults.lazy = config.lazy
       else
-        define this, "_value",
-          value: config.value
-        if config.needsValue
-          define this, "_needsValue",
-            value: yes
+        define this, "_value", { value: config.value }
+        define this, "_needsValue", { value: config.needsValue is yes }
 
     return defaults
 

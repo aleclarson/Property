@@ -137,17 +137,16 @@ prototype = {
       }
     } else {
       assert(!config.set, "Cannot define 'set' without 'get'!");
+      defaults.reactive = config.reactive === true;
       if (config.lazy) {
         defaults.lazy = config.lazy;
       } else {
         define(this, "_value", {
           value: config.value
         });
-        if (config.needsValue) {
-          define(this, "_needsValue", {
-            value: true
-          });
-        }
+        define(this, "_needsValue", {
+          value: config.needsValue === true
+        });
       }
     }
     return defaults;
