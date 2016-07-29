@@ -11,7 +11,7 @@
     "Void": "aleclarson/Void#1.0.0",
     "assert": "aleclarson/assert#1.0.0",
     "assertType": "aleclarson/assertType#1.0.0",
-    "assertTypes": "aleclarson/assertTypes#1.0.0",
+    "assertTypes": "aleclarson/assertTypes#2.0.0",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "isDev": "aleclarson/isDev#1.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
