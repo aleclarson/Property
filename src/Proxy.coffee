@@ -13,17 +13,19 @@ define = Object.defineProperty
 
 Proxy = exports
 
-Proxy.define = (config) ->
+Proxy.define = (target, key, config) ->
+
+  proxy = Proxy.create config, key, target
 
   if isDev
-    try define config.target, config.key, Proxy.create config
+    try define target, key, proxy
     catch error then console.error error
     return
 
-  define config.target, config.key, Proxy.create config
+  define target, key, proxy
   return
 
-Proxy.create = (config) ->
+Proxy.create = (config, key, target) ->
 
   type =
     if config.get then "stateless"
@@ -31,8 +33,8 @@ Proxy.create = (config) ->
     else if config.reactive then "reactive"
     else "stateful"
 
-  proxy = Proxy.types[type] config
-  proxy.set and proxy.set = Setter.create config, proxy
+  proxy = Proxy.types[type] config, key, target
+  proxy.set and proxy.set = Setter.create key, proxy, config
   proxy.enumerable = config.enumerable
   proxy.configurable = config.configurable
   return proxy
@@ -43,8 +45,8 @@ Proxy.types =
     get: config.get or @get
     set: config.set or @set or emptyFunction
 
-  lazy: (config) ->
-    targetIsProto = isProto config.target
+  lazy: (config, key, target) ->
+    targetIsProto = isProto target
     if config.reactive and targetIsProto
       throw Error "Cannot define a reactive Property on a prototype!"
     value = LazyVar
@@ -53,23 +55,24 @@ Proxy.types =
     get = value.get
     get.safely = -> value._value
     if targetIsProto
-      set = -> throw Error "'#{config.key.toString()}' is not writable."
+      set = -> throw Error "'#{key.toString()}' is not writable."
     else set = value.set
     return { get, set }
 
-  reactive: (config) ->
-    assert not isProto(config.target), "Cannot define reactive Property on a prototype!"
-    value = ReactiveVar config.value ? defaults.value
+  reactive: (config, key, target) ->
+    assert not isProto(target), "Cannot define reactive Property on a prototype!"
+    value = ReactiveVar config.value
     get = -> value.get()
     get.safely = -> value._value
     set = (newValue) -> value.set newValue
     return { get, set }
 
-  stateful: (config) ->
+  stateful: (config, key, target) ->
     value = config.value
-    if isProto config.target
+    if isProto target
       value: value
       writable: config.writable
     else
       get: -> value
-      set: (newValue) -> value = newValue
+      set: (newValue) ->
+        value = newValue

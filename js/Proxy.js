@@ -18,25 +18,26 @@ define = Object.defineProperty;
 
 Proxy = exports;
 
-Proxy.define = function(config) {
-  var error;
+Proxy.define = function(target, key, config) {
+  var error, proxy;
+  proxy = Proxy.create(config, key, target);
   if (isDev) {
     try {
-      define(config.target, config.key, Proxy.create(config));
+      define(target, key, proxy);
     } catch (error1) {
       error = error1;
       console.error(error);
     }
     return;
   }
-  define(config.target, config.key, Proxy.create(config));
+  define(target, key, proxy);
 };
 
-Proxy.create = function(config) {
+Proxy.create = function(config, key, target) {
   var proxy, type;
   type = config.get ? "stateless" : config.lazy ? "lazy" : config.reactive ? "reactive" : "stateful";
-  proxy = Proxy.types[type](config);
-  proxy.set && (proxy.set = Setter.create(config, proxy));
+  proxy = Proxy.types[type](config, key, target);
+  proxy.set && (proxy.set = Setter.create(key, proxy, config));
   proxy.enumerable = config.enumerable;
   proxy.configurable = config.configurable;
   return proxy;
@@ -49,9 +50,9 @@ Proxy.types = {
       set: config.set || this.set || emptyFunction
     };
   },
-  lazy: function(config) {
+  lazy: function(config, key, target) {
     var get, set, targetIsProto, value;
-    targetIsProto = isProto(config.target);
+    targetIsProto = isProto(target);
     if (config.reactive && targetIsProto) {
       throw Error("Cannot define a reactive Property on a prototype!");
     }
@@ -65,7 +66,7 @@ Proxy.types = {
     };
     if (targetIsProto) {
       set = function() {
-        throw Error("'" + (config.key.toString()) + "' is not writable.");
+        throw Error("'" + (key.toString()) + "' is not writable.");
       };
     } else {
       set = value.set;
@@ -75,10 +76,10 @@ Proxy.types = {
       set: set
     };
   },
-  reactive: function(config) {
-    var get, ref, set, value;
-    assert(!isProto(config.target), "Cannot define reactive Property on a prototype!");
-    value = ReactiveVar((ref = config.value) != null ? ref : defaults.value);
+  reactive: function(config, key, target) {
+    var get, set, value;
+    assert(!isProto(target), "Cannot define reactive Property on a prototype!");
+    value = ReactiveVar(config.value);
     get = function() {
       return value.get();
     };
@@ -93,10 +94,10 @@ Proxy.types = {
       set: set
     };
   },
-  stateful: function(config) {
+  stateful: function(config, key, target) {
     var value;
     value = config.value;
-    if (isProto(config.target)) {
+    if (isProto(target)) {
       return {
         value: value,
         writable: config.writable

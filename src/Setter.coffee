@@ -1,12 +1,16 @@
 
+require "isDev"
+
+emptyFunction = require "emptyFunction"
+
 Setter = exports
 
-Setter.create = (config, proxy) ->
+Setter.create = (key, proxy, config) ->
 
   unless proxy.set and config.writable
-    if isDev then return ->
-      throw Error "'" + config.key.toString() + "' is not writable."
-    return emptyFunction
+    return if isDev then ->
+      throw Error "'#{key.toString()}' is not writable."
+    else emptyFunction
 
   setter = Setter.build proxy.set, config.willSet, config.didSet
 

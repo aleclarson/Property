@@ -1,16 +1,21 @@
-var Setter;
+var Setter, emptyFunction;
+
+require("isDev");
+
+emptyFunction = require("emptyFunction");
 
 Setter = exports;
 
-Setter.create = function(config, proxy) {
+Setter.create = function(key, proxy, config) {
   var getter, setter;
   if (!(proxy.set && config.writable)) {
     if (isDev) {
       return function() {
-        throw Error("'" + config.key.toString() + "' is not writable.");
+        throw Error("'" + (key.toString()) + "' is not writable.");
       };
+    } else {
+      return emptyFunction;
     }
-    return emptyFunction;
   }
   setter = Setter.build(proxy.set, config.willSet, config.didSet);
   if (setter.length < 2) {
