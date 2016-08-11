@@ -4,13 +4,10 @@ require "isDev"
 NamedFunction = require "NamedFunction"
 mergeDefaults = require "mergeDefaults"
 assertTypes = require "assertTypes"
-assertType = require "assertType"
-PureObject = require "PureObject"
 isProto = require "isProto"
 isType = require "isType"
 assert = require "assert"
 Void = require "Void"
-Kind = require "Kind"
 Any = require "Any"
 
 Proxy = require "./Proxy"
@@ -38,23 +35,9 @@ Property = NamedFunction "Property", (config = {}) ->
     value: self._parseDefaults config
   return self
 
-Property.targetType = [
-  Kind Object
-  PureObject
-]
-
-Property.keyType =
-  if global.Symbol
-    [ String, Symbol ]
-  else String
-
 prototype =
 
   define: (target, key, config = {}) ->
-
-    assertType target, Property.targetType
-    assertType key, Property.keyType
-    assertType config, Object
 
     if config.value is undefined
       config.value = @_value

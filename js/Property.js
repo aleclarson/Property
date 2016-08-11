@@ -1,4 +1,4 @@
-var Any, Kind, NamedFunction, Property, Proxy, PureObject, Void, assert, assertType, assertTypes, configTypes, define, isProto, isType, mergeDefaults, prototype;
+var Any, NamedFunction, Property, Proxy, Void, assert, assertTypes, configTypes, define, isProto, isType, mergeDefaults, prototype;
 
 require("isDev");
 
@@ -8,10 +8,6 @@ mergeDefaults = require("mergeDefaults");
 
 assertTypes = require("assertTypes");
 
-assertType = require("assertType");
-
-PureObject = require("PureObject");
-
 isProto = require("isProto");
 
 isType = require("isType");
@@ -19,8 +15,6 @@ isType = require("isType");
 assert = require("assert");
 
 Void = require("Void");
-
-Kind = require("Kind");
 
 Any = require("Any");
 
@@ -56,18 +50,11 @@ Property = NamedFunction("Property", function(config) {
   return self;
 });
 
-Property.targetType = [Kind(Object), PureObject];
-
-Property.keyType = global.Symbol ? [String, Symbol] : String;
-
 prototype = {
   define: function(target, key, config) {
     if (config == null) {
       config = {};
     }
-    assertType(target, Property.targetType);
-    assertType(key, Property.keyType);
-    assertType(config, Object);
     if (config.value === void 0) {
       config.value = this._value;
     }

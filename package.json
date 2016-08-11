@@ -5,12 +5,9 @@
   "dependencies": {
     "Any": "aleclarson/Any#1.0.0",
     "InjectableType": "aleclarson/InjectableType#1.0.0",
-    "Kind": "aleclarson/Kind#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
-    "PureObject": "aleclarson/PureObject#1.0.0",
     "Void": "aleclarson/Void#1.0.0",
     "assert": "aleclarson/assert#1.0.0",
-    "assertType": "aleclarson/assertType#2.0.0",
     "assertTypes": "aleclarson/assertTypes#2.0.0",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "isDev": "aleclarson/isDev#1.0.0",
