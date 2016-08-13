@@ -156,6 +156,10 @@ Property.hidden = Property({
   enumerable: false
 });
 
+Property.reactive = Property({
+  reactive: true
+});
+
 module.exports = Property;
 
 //# sourceMappingURL=map/Property.map

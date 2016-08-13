@@ -111,4 +111,6 @@ Property.frozen = Property { frozen: yes }
 
 Property.hidden = Property { enumerable: no }
 
+Property.reactive = Property { reactive: yes }
+
 module.exports = Property
