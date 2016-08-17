@@ -3,7 +3,6 @@ require "isDev"
 
 emptyFunction = require "emptyFunction"
 isProto = require "isProto"
-assert = require "assert"
 
 ReactiveVar = require "./inject/ReactiveVar"
 LazyVar = require "./inject/LazyVar"
@@ -60,7 +59,10 @@ Proxy.types =
     return { get, set }
 
   reactive: (config, key, target) ->
-    assert not isProto(target), "Cannot define reactive Property on a prototype!"
+
+    if isProto target
+      throw Error "Cannot define reactive Property on a prototype!"
+
     value = ReactiveVar config.value
     get = -> value.get()
     get.safely = -> value._value

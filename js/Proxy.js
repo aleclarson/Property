@@ -1,12 +1,10 @@
-var LazyVar, Proxy, ReactiveVar, Setter, assert, define, emptyFunction, isProto;
+var LazyVar, Proxy, ReactiveVar, Setter, define, emptyFunction, isProto;
 
 require("isDev");
 
 emptyFunction = require("emptyFunction");
 
 isProto = require("isProto");
-
-assert = require("assert");
 
 ReactiveVar = require("./inject/ReactiveVar");
 
@@ -78,7 +76,9 @@ Proxy.types = {
   },
   reactive: function(config, key, target) {
     var get, set, value;
-    assert(!isProto(target), "Cannot define reactive Property on a prototype!");
+    if (isProto(target)) {
+      throw Error("Cannot define reactive Property on a prototype!");
+    }
     value = ReactiveVar(config.value);
     get = function() {
       return value.get();

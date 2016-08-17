@@ -3,18 +3,15 @@
   "version": "1.1.1",
   "main": "js/index",
   "dependencies": {
-    "Any": "aleclarson/Any#1.0.0",
     "InjectableType": "aleclarson/InjectableType#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
-    "Void": "aleclarson/Void#1.0.0",
-    "assert": "aleclarson/assert#1.0.0",
-    "assertTypes": "aleclarson/assertTypes#2.0.0",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "isDev": "aleclarson/isDev#1.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
     "isType": "aleclarson/isType#1.0.0",
     "mergeDefaults": "aleclarson/mergeDefaults#1.0.0",
-    "setType": "aleclarson/setType#1.0.0"
+    "setType": "aleclarson/setType#1.0.0",
+    "wrongType": "aleclarson/wrongType#1.0.0"
   },
   "lotus": {
     "plugins": [
