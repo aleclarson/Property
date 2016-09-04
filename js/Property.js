@@ -29,6 +29,9 @@ Property.prototype.define = function(target, key, config) {
   if (config == null) {
     config = {};
   }
+  if (isDev && typeof key !== "string") {
+    throw TypeError("'key' must be a String!");
+  }
   if (config.value === void 0) {
     config.value = this._value;
   }

@@ -19,6 +19,9 @@ module.exports = Property
 
 Property::define = (target, key, config = {}) ->
 
+  if isDev and typeof key isnt "string"
+    throw TypeError "'key' must be a String!"
+
   if config.value is undefined
     config.value = @_value
 
