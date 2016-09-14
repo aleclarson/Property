@@ -4,8 +4,7 @@ require "isDev"
 emptyFunction = require "emptyFunction"
 isProto = require "isProto"
 
-ReactiveVar = require "./inject/ReactiveVar"
-LazyVar = require "./inject/LazyVar"
+injected = require "./injectable"
 Setter = require "./Setter"
 
 define = Object.defineProperty
@@ -45,23 +44,37 @@ Proxy.types =
     set: config.set or @set or emptyFunction
 
   lazy: (config, key, target) ->
+
     targetIsProto = isProto target
+
     if config.reactive and targetIsProto
       throw Error "Cannot define a reactive Property on a prototype!"
+
+    if injected.has "LazyVar"
+      LazyVar = injected.get "LazyVar"
+    else throw Error "Must inject 'LazyVar' into 'Property' before defining a lazy property!"
+
     value = LazyVar
       createValue: config.lazy
       reactive: config.reactive
+
     get = value.get
     get.safely = -> value._value
+
     if targetIsProto
       set = -> throw Error "'#{key.toString()}' is not writable."
     else set = value.set
+
     return { get, set }
 
   reactive: (config, key, target) ->
 
     if isProto target
       throw Error "Cannot define reactive Property on a prototype!"
+
+    if injected.has "ReactiveVar"
+      ReactiveVar = injected.get "ReactiveVar"
+    else throw Error "Must inject 'ReactiveVar' into 'Property' before defining a reactive property!"
 
     value = ReactiveVar config.value
     get = -> value.get()
