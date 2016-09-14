@@ -2,6 +2,14 @@
   "name": "Property",
   "version": "1.1.1",
   "main": "js/index",
+  "plugins": [
+    "lotus-coffee",
+    "lotus-runner"
+  ],
+  "scripts": {
+    "build": "coffee -cb -o js src",
+    "postinstall": "postinstall-build js 'npm run build'"
+  },
   "dependencies": {
     "InjectableType": "aleclarson/InjectableType#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
@@ -10,13 +18,11 @@
     "isProto": "aleclarson/isProto#1.0.0",
     "isType": "aleclarson/isType#1.0.0",
     "mergeDefaults": "aleclarson/mergeDefaults#1.0.0",
+    "postinstall-build": "0.2.x",
     "setType": "aleclarson/setType#1.0.0",
     "wrongType": "aleclarson/wrongType#1.0.0"
   },
-  "lotus": {
-    "plugins": [
-      "lotus-coffee",
-      "lotus-runner"
-    ]
+  "devDependencies": {
+    "coffee-script": "1.9.x"
   }
 }
