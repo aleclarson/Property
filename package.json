@@ -11,7 +11,6 @@
     "postinstall": "postinstall-build js 'npm run build'"
   },
   "dependencies": {
-    "InjectableType": "aleclarson/InjectableType#1.0.0",
     "NamedFunction": "aleclarson/NamedFunction#2.0.0",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "isDev": "aleclarson/isDev#1.0.0",
