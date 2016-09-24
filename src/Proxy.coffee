@@ -1,8 +1,7 @@
 
-require "isDev"
-
 emptyFunction = require "emptyFunction"
 isProto = require "isProto"
+isDev = require "isDev"
 
 injected = require "./injectable"
 Setter = require "./Setter"

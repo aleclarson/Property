@@ -1,8 +1,7 @@
 
-require "isDev"
-
 NamedFunction = require "NamedFunction"
 mergeDefaults = require "mergeDefaults"
+isDev = require "isDev"
 
 Proxy = require "./Proxy"
 

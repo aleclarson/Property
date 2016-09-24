@@ -1,7 +1,6 @@
 
-require "isDev"
-
 emptyFunction = require "emptyFunction"
+isDev = require "isDev"
 
 Setter = exports
 

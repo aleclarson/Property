@@ -13,7 +13,7 @@
   "dependencies": {
     "NamedFunction": "aleclarson/NamedFunction#2.0.1",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
-    "isDev": "aleclarson/isDev#1.0.0",
+    "isDev": "aleclarson/isDev#2.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
     "isType": "aleclarson/isType#1.0.0",
     "mergeDefaults": "aleclarson/mergeDefaults#1.0.0",
