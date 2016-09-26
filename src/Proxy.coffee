@@ -82,11 +82,19 @@ Proxy.types =
     return { get, set }
 
   stateful: (config, key, target) ->
-    value = config.value
+
+    # Defining a setter on a prototype does not make sense (with stateful proxies).
     if isProto target
-      value: value
+      value: config.value
       writable: config.writable
-    else
+
+    # For stateful proxies, we only want to create a setter if we're using "willSet" or "didSet".
+    else if config.willSet or config.didSet
+      value = config.value
       get: -> value
       set: (newValue) ->
         value = newValue
+
+    else
+      value: config.value
+      writable: config.writable
