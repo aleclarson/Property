@@ -1,28 +1,29 @@
 {
   "name": "Property",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "main": "js/index",
+  "plugins": [
+    "lotus-coffee",
+    "lotus-runner"
+  ],
+  "scripts": {
+    "build": "coffee -cb -o js src",
+    "postinstall": "postinstall-build js 'npm run build'"
+  },
   "dependencies": {
-    "Any": "aleclarson/Any#1.0.0",
-    "InjectableType": "aleclarson/InjectableType#1.0.0",
+    "InjectableMap": "aleclarson/InjectableMap#1.0.0",
     "Kind": "aleclarson/Kind#1.0.0",
-    "NamedFunction": "aleclarson/NamedFunction#2.0.0",
-    "PureObject": "aleclarson/PureObject#1.0.0",
-    "Void": "aleclarson/Void#1.0.0",
-    "assert": "aleclarson/assert#1.0.0",
-    "assertType": "aleclarson/assertType#2.0.0",
-    "assertTypes": "aleclarson/assertTypes#2.0.0",
+    "NamedFunction": "aleclarson/NamedFunction#2.0.1",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
-    "isDev": "aleclarson/isDev#1.0.0",
+    "isDev": "aleclarson/isDev#2.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
     "isType": "aleclarson/isType#1.0.0",
     "mergeDefaults": "aleclarson/mergeDefaults#1.0.0",
-    "setType": "aleclarson/setType#1.0.0"
+    "postinstall-build": "0.2.x",
+    "setType": "aleclarson/setType#1.0.0",
+    "wrongType": "aleclarson/wrongType#1.0.0"
   },
-  "lotus": {
-    "plugins": [
-      "lotus-coffee",
-      "lotus-runner"
-    ]
+  "devDependencies": {
+    "coffee-script": "1.9.x"
   }
 }
