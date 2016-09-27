@@ -5,13 +5,10 @@ isDev = require "isDev"
 
 Proxy = require "./Proxy"
 
-define = Object.defineProperty
-
 Property = NamedFunction "Property", (config = {}) ->
   isDev and validateConfig config
   self = Object.create Property.prototype
-  define self, "_defaults",
-    value: self._parseDefaults config
+  self.defaults = self._parseDefaults config
   return self
 
 module.exports = Property
@@ -22,44 +19,37 @@ Property::define = (target, key, config = {}) ->
     throw TypeError "'key' must be a String!"
 
   if config.value is undefined
-    config.value = @_value
+    config.value = @value
 
-  if config.needsValue ?= @_needsValue
-    return if config.value is undefined
+  if config.value is undefined
+    return if config.needsValue or @needsValue
 
-  config.enumerable ?= if isDev then @_isEnumerable key else yes
-  mergeDefaults config, @_defaults
+  if config.enumerable is undefined
+    config.enumerable = (not isDev) or not (@hidden or key.startsWith "_")
 
-  if @_needsProxy config
+  mergeDefaults config, @defaults
+
+  if needsProxy config
     Proxy.define target, key, config
   else
     target[key] = config.value
   return
 
-Property::_isEnumerable = (key) ->
-  return yes if typeof key is "symbol"
-  return no if @_enumerable is no
-  return key[0] isnt "_"
-
-Property::_needsProxy = (config) ->
-  return yes unless config.enumerable and config.writable and config.configurable
-  return yes if config.get or config.lazy or config.reactive
-  return yes if config.didSet or config.willSet
-  return no
-
 Property::_parseDefaults = (config) ->
 
   defaults = {}
 
-  if isDev and (config.enumerable is no)
-    define this, "_enumerable", { value: no }
+  if isDev
 
-  if config.frozen
-    defaults.writable = not isDev
-    defaults.configurable = not isDev
+    if config.enumerable is no
+      @hidden = yes
+
+    defaults.writable = not (config.frozen or config.writable is no)
+    defaults.configurable = not (config.frozen or config.configurable is no)
+
   else
-    defaults.writable = (not isDev) or (config.writable isnt no)
-    defaults.configurable = (not isDev) or (config.configurable isnt no)
+    defaults.writable = config.writable isnt no
+    defaults.configurable = config.configurable isnt no
 
   if config.willSet
     defaults.willSet = config.willSet
@@ -76,19 +66,29 @@ Property::_parseDefaults = (config) ->
   else if config.set
     throw Error "Cannot define 'set' without 'get'!"
 
+  else if config.lazy
+    defaults.lazy = config.lazy
+
   else
-    defaults.reactive = config.reactive is yes
-    if config.lazy
-      defaults.lazy = config.lazy
-    else
-      define this, "_value", { value: config.value }
-      define this, "_needsValue", { value: config.needsValue is yes }
+    @value = config.value
+
+    if config.needsValue
+      @needsValue = yes
+
+    if config.reactive
+      defaults.reactive = yes
 
   return defaults
 
 #
 # Helpers
 #
+
+needsProxy = (config) ->
+  return yes unless config.enumerable and config.writable and config.configurable
+  return yes if config.get or config.lazy or config.reactive
+  return yes if config.didSet or config.willSet
+  return no
 
 isDev and
 validateConfig = do ->

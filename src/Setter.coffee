@@ -4,24 +4,31 @@ isDev = require "isDev"
 
 Setter = exports
 
-Setter.create = (key, proxy, config) ->
+Setter.frozen = (key) ->
+  if isDev
+  then -> throw Error "'#{key.toString()}' is not writable."
+  else emptyFunction
 
-  unless proxy.set and config.writable
-    return if isDev then ->
-      throw Error "'#{key.toString()}' is not writable."
-    else emptyFunction
+Setter.define = (proxy, {willSet, didSet}) ->
 
-  setter = Setter.build proxy.set, config.willSet, config.didSet
+  setter = Setter.wrap proxy.set, willSet, didSet
 
-  if setter.length < 2
-    return (newValue) ->
+  needsGetter =
+    (proxy.set.length > 1) or
+    (didSet and didSet.length > 1) or
+    (willSet and willSet.length > 1)
+
+  if needsGetter
+    getter = proxy.get.safely or proxy.get
+    proxy.set = (newValue) ->
+      setter.call this, newValue, getter.call this
+
+  else
+    proxy.set = (newValue) ->
       setter.call this, newValue
+  return
 
-  getter = proxy.get.safely or proxy.get
-  return (newValue) ->
-    setter.call this, newValue, getter.call this
-
-Setter.build = (set, willSet, didSet) ->
+Setter.wrap = (set, willSet, didSet) ->
 
   if willSet
 
