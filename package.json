@@ -11,14 +11,14 @@
     "postinstall": "npm run build"
   },
   "dependencies": {
-    "InjectableMap": "aleclarson/InjectableMap#1.0.0",
-    "Kind": "aleclarson/Kind#1.0.0",
+    "InjectableMap": "aleclarson/InjectableMap#1.1.0",
+    "Kind": "aleclarson/Kind#1.0.1",
     "NamedFunction": "aleclarson/NamedFunction#2.0.1",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "isDev": "aleclarson/isDev#2.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
-    "isType": "aleclarson/isType#1.0.0",
-    "mergeDefaults": "aleclarson/mergeDefaults#1.0.0",
+    "isType": "aleclarson/isType#1.0.1",
+    "mergeDefaults": "aleclarson/mergeDefaults#1.0.1",
     "setType": "aleclarson/setType#1.0.0",
     "wrongType": "aleclarson/wrongType#1.0.0"
   }
