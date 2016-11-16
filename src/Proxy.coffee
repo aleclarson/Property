@@ -60,7 +60,7 @@ Proxy.reactive = (config, key, target) ->
     throw Error "Must inject 'ReactiveVar' into 'Property' before defining a reactive property!"
 
   ReactiveVar = injected.get "ReactiveVar"
-  value = ReactiveVar config.value
+  value = ReactiveVar config.value, target.constructor.name + "." + key
 
   @get = -> value.get()
 
