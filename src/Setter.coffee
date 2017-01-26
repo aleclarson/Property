@@ -24,8 +24,7 @@ Setter.define = (proxy, {willSet, didSet}) ->
       setter.call this, newValue, getter.call this
 
   else
-    proxy.set = (newValue) ->
-      setter.call this, newValue
+    proxy.set = setter
   return
 
 Setter.wrap = (set, willSet, didSet) ->
