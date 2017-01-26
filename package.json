@@ -18,7 +18,7 @@
     "isDev": "aleclarson/isDev#2.0.0",
     "isProto": "aleclarson/isProto#1.0.0",
     "isType": "aleclarson/isType#1.0.1",
-    "mergeDefaults": "aleclarson/mergeDefaults#1.0.1",
+    "mergeDefaults": "aleclarson/mergeDefaults#1.0.2",
     "setType": "aleclarson/setType#1.0.0",
     "wrongType": "aleclarson/wrongType#1.0.0"
   }
