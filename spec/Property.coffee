@@ -1,5 +1,8 @@
 
-Property = require "../src/Property"
+Property = require ".."
+
+require "LazyVar"      # Provides 'options.lazy' support
+require "ReactiveVar"  # Provides 'options.reactive' support
 
 describe "Property", ->
 
@@ -53,7 +56,7 @@ describe "Property", ->
     it "works as expected if the value is not undefined", ->
 
       prop = Property { needsValue: yes }
-      prop.define obj = {}, "key", 1
+      prop.define obj = {}, "key", { value: 1 }
 
       expect obj.key
         .toBe 1
@@ -64,10 +67,10 @@ describe "Property", ->
 
       prop = Property { frozen: yes }
 
-      expect prop.writable
+      expect prop.defaults.writable
         .toBe no
 
-      expect prop.configurable
+      expect prop.defaults.configurable
         .toBe no
 
   describe "options.writable", ->
@@ -76,7 +79,7 @@ describe "Property", ->
 
       prop = Property()
 
-      expect prop.writable
+      expect prop.defaults.writable
         .toBe yes
 
   describe "options.configurable", ->
@@ -85,26 +88,21 @@ describe "Property", ->
 
       prop = Property()
 
-      expect prop.configurable
+      expect prop.defaults.configurable
         .toBe yes
 
     it "throws an error when attempting to redefine the property", ->
 
       prop = Property { configurable: no }
-      prop.define obj = {}, "key"
+      prop.define obj = {}, "key", { value: 1 }
 
-      expect -> prop.define obj, "key"
+      expect -> prop.define obj, "key", { value: 2, writable: no }
         .toThrowError "Cannot redefine property: key"
 
   describe "options.enumerable", ->
 
     it "defaults to undefined", ->
-
       prop = Property()
-
-      expect prop.hasOwnProperty "enumerable"
-        .toBe yes
-
       expect prop.enumerable
         .toBe undefined
 
@@ -166,16 +164,12 @@ describe "Property", ->
 
     it "cannot be defined on a prototype", ->
 
-      MyType = ->
-
-      spy = jasmine.createSpy()
-
       prop = Property
         get: -> 1
-        set: spy
+        set: spy = jasmine.createSpy()
 
+      MyType = ->
       prop.define MyType.prototype, "test"
-
       self = new MyType
 
       expect -> self.test = 0
@@ -251,9 +245,6 @@ describe "Property", ->
 
   describe "options.lazy", ->
 
-    # This must be imported to support 'options.lazy'!
-    LazyVar = require "lazy-var"
-
     it "creates a value that is backed by a LazyVar", ->
 
       spy = jasmine.createSpy()
@@ -272,9 +263,6 @@ describe "Property", ->
   describe "options.reactive", ->
 
     Tracker = require "tracker"
-
-    # This must be imported to support 'options.reactive'!
-    ReactiveVar = require "reactive-var"
 
     it "creates a value that is backed by a ReactiveVar", ->
 

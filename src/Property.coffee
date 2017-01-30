@@ -1,5 +1,6 @@
 
 NamedFunction = require "NamedFunction"
+emptyFunction = require "emptyFunction"
 mergeDefaults = require "mergeDefaults"
 isDev = require "isDev"
 
@@ -25,7 +26,7 @@ Property::define = (target, key, config = {}) ->
     return if config.needsValue or @needsValue
 
   if config.enumerable is undefined
-    config.enumerable = (not isDev) or not (@hidden or key.startsWith "_")
+    config.enumerable = not isHiddenProperty this, key
 
   mergeDefaults config, @defaults
 
@@ -89,6 +90,11 @@ needsProxy = (config) ->
   return yes if config.get or config.lazy or config.reactive
   return yes if config.didSet or config.willSet
   return no
+
+isHiddenProperty =
+  if isDev
+  then (prop, key) -> prop.hidden or key.startsWith "_"
+  else emptyFunction.thatReturnsFalse
 
 isDev and
 validateConfig = do ->
