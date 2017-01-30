@@ -1,5 +1,5 @@
 
-# Property v1.2.2 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
+# Property v1.2.3 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
 
 - The `config` argument is never stored or mutated by the `Property` constructor. Feel free to reuse it. You can even mutate the `config` before each `Property(config)` without affecting existing properties created with the same `config`.
 
