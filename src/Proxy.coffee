@@ -24,11 +24,6 @@ Proxy.define = (target, key, config) ->
 
   Proxy[type].call proxy, config, key, target
 
-  if isDev
-    try define target, key, proxy
-    catch error then console.error error
-    return
-
   define target, key, proxy
   return
 
