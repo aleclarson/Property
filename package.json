@@ -1,0 +1,17 @@
+{
+  "name": "Property",
+  "version": "1.2.4",
+  "main": "js/index",
+  "dependencies": {
+    "InjectableMap": "aleclarson/InjectableMap#1.1.1",
+    "Kind": "aleclarson/Kind#1.0.2",
+    "NamedFunction": "aleclarson/NamedFunction#2.0.1",
+    "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "isDev": "aleclarson/isDev#2.0.0",
+    "isProto": "aleclarson/isProto#1.0.0",
+    "isType": "aleclarson/isType#1.0.2",
+    "mergeDefaults": "aleclarson/mergeDefaults#1.0.3",
+    "setType": "aleclarson/setType#1.0.0",
+    "wrongType": "aleclarson/wrongType#1.0.1"
+  }
+}
