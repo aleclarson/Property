@@ -29,11 +29,7 @@ Property::define = (target, key, config = {}) ->
     config.enumerable = not isHiddenProperty this, key
 
   mergeDefaults config, @defaults
-
-  if needsProxy config
-    Proxy.define target, key, config
-  else
-    target[key] = config.value
+  Proxy.define target, key, config
   return
 
 Property::_parseDefaults = (config) ->
@@ -84,12 +80,6 @@ Property::_parseDefaults = (config) ->
 #
 # Helpers
 #
-
-needsProxy = (config) ->
-  return yes unless config.enumerable and config.writable and config.configurable
-  return yes if config.get or config.lazy or config.reactive
-  return yes if config.didSet or config.willSet
-  return no
 
 isHiddenProperty =
   if isDev
